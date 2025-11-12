@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://36.91.103.196:3000/';
+  static const String baseUrl = 'http://36.88.99.179:8000/api/';
 
   // Login method
   static Future<Map<String, dynamic>> login(

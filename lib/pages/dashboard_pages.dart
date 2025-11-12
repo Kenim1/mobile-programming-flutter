@@ -4,6 +4,9 @@ import 'package:dio/dio.dart';
 import '../api/api_service.dart';
 import '../widgets/bottom_nav.dart';
 import './detail_berita_pages.dart';
+import './matakuliah_page.dart';
+import './profile_pages.dart';
+import './input_krs_page.dart';
 
 class DashboardPages extends StatefulWidget {
   const DashboardPages({super.key});
@@ -19,7 +22,7 @@ class _DashboardPagesState extends State<DashboardPages> {
   final List<Map<String, dynamic>> menuItems = [
     {"icon": Icons.school, "label": "KRS"},
     {"icon": Icons.grade, "label": "KHS"},
-    {"icon": Icons.calendar_month, "label": "Jadwal"},
+    {"icon": Icons.calendar_month, "label": "Matakuliah"},
     {"icon": Icons.person, "label": "Profil"},
     {"icon": Icons.bar_chart, "label": "IPK"},
     {"icon": Icons.help, "label": "Bantuan"},
@@ -72,6 +75,30 @@ class _DashboardPagesState extends State<DashboardPages> {
       });
     } catch (e) {
       debugPrint("Error getBerita: $e");
+    }
+  }
+
+  // ====== HANDLE MENU CLICK ======
+  void _onMenuTap(String label) {
+    if (label == "Matakuliah") {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const DaftarMatakuliahPage()),
+      );
+    } else if (label == "Profil") {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const ProfilePages()),
+      );
+    } else if (label == "KRS") {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const InputKrsPage()),
+      );
+    } else {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Menu "$label" belum tersedia')));
     }
   }
 
@@ -153,22 +180,25 @@ class _DashboardPagesState extends State<DashboardPages> {
                     mainAxisSpacing: 10,
                     children: menuItems
                         .map(
-                          (item) => Column(
-                            children: [
-                              CircleAvatar(
-                                radius: 28,
-                                backgroundColor: Colors.blue.shade100,
-                                child: Icon(
-                                  item["icon"],
-                                  color: Colors.blue.shade800,
+                          (item) => GestureDetector(
+                            onTap: () => _onMenuTap(item["label"]),
+                            child: Column(
+                              children: [
+                                CircleAvatar(
+                                  radius: 28,
+                                  backgroundColor: Colors.blue.shade100,
+                                  child: Icon(
+                                    item["icon"],
+                                    color: Colors.blue.shade800,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                item["label"],
-                                style: const TextStyle(fontSize: 12),
-                              ),
-                            ],
+                                const SizedBox(height: 8),
+                                Text(
+                                  item["label"],
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              ],
+                            ),
                           ),
                         )
                         .toList(),

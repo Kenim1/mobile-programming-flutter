@@ -25,7 +25,7 @@ class _LoginPagesState extends State<LoginPages> {
       passwordController.text,
     );
 
-    print(res);
+    print('hasil dari response : ${res}');
     if (res['status'] == 200) {
       await ApiService.saveToken(res['data'], emailController.text);
       QuickAlert.show(
@@ -42,7 +42,7 @@ class _LoginPagesState extends State<LoginPages> {
     } else {
       QuickAlert.show(
         context: context,
-        type: QuickAlertType.success,
+        type: QuickAlertType.error,
         text: 'Email / Password Salah!',
       );
     }

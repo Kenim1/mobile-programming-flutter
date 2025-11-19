@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../api/api_service.dart';
+import './krs_detail_page.dart';
 
 class InputKrsPage extends StatefulWidget {
   const InputKrsPage({super.key});
@@ -12,92 +13,103 @@ class InputKrsPage extends StatefulWidget {
 
 class _InputKrsPageState extends State<InputKrsPage> {
   Map<String, dynamic>? user;
+
   final _formKey = GlobalKey<FormState>();
   final TextEditingController semesterController = TextEditingController();
 
-  bool isLoading = false;
+  bool isLoading = false; // untuk submit
+  bool isFetching = true; // untuk seluruh data awal
   bool isFetchingKrs = false;
+
   List<dynamic> daftarKrs = [];
 
   @override
   void initState() {
     super.initState();
-    _getMahasiswaData();
+    _loadInitialData();
   }
 
-  // ===== GET DATA MAHASISWA DARI TOKEN =====
-  Future<void> _getMahasiswaData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token');
-    final email = prefs.getString('auth_email');
+  // ==============================
+  // LOAD DATA USER + DAFTAR KRS
+  // ==============================
+  Future<void> _loadInitialData() async {
+    await _getMahasiswaData();
+    if (user != null) {
+      await _getDaftarKrs();
+    }
 
-    Dio dio = Dio();
-    dio.options.headers['Authorization'] = 'Bearer $token';
-
-    final response = await dio.post(
-      "${ApiService.baseUrl}mahasiswa/detail-mahasiswa",
-      data: {"email": email},
-    );
     setState(() {
-      user = response.data['data'];
+      isFetching = false;
     });
   }
 
-  // ====== INPUT KRS ======
-  Future<void> _submitKrs() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() => isLoading = true);
-
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token');
-
-    Dio dio = Dio();
-    dio.options.headers['Authorization'] = 'Bearer $token';
-
-    final String url = '${ApiService.baseUrl}krs/buat-krs';
-
+  // ==============================
+  // GET DATA MAHASISWA DARI TOKEN
+  // ==============================
+  Future<void> _getMahasiswaData() async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+      final email = prefs.getString('auth_email');
+
+      Dio dio = Dio();
+      dio.options.headers['Authorization'] = 'Bearer $token';
+
       final response = await dio.post(
-        url,
-        data: {'nim': user?['nim'], 'semester': semesterController.text},
-        options: Options(headers: {"Accept": "application/json"}),
+        "${ApiService.baseUrl}mahasiswa/detail-mahasiswa",
+        data: {"email": email},
       );
 
-      if (response.statusCode == 200) {
-        final status = response.data['status'];
-        final msg = response.data['msg'] ?? "KRS berhasil disimpan";
+      setState(() {
+        user = response.data['data'];
+      });
+    } catch (e) {
+      debugPrint("ERROR GET USER: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Gagal memuat data mahasiswa"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
-        if (status == 200) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(msg), backgroundColor: Colors.green),
-          );
-          _formKey.currentState!.reset();
-          semesterController.clear();
-          await _getDaftarKrs(); // tampilkan daftar KRS setelah berhasil simpan
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(msg), backgroundColor: Colors.orange),
-          );
-        }
-      } else {
+  // ==============================
+  // SUBMIT KRS
+  // ==============================
+  Future<void> _submitKrs() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => isLoading = true);
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
+
+      Dio dio = Dio();
+      dio.options.headers['Authorization'] = 'Bearer $token';
+
+      final response = await dio.post(
+        "${ApiService.baseUrl}krs/buat-krs",
+        data: {'nim': user?['nim'], 'semester': semesterController.text},
+      );
+
+      final msg = response.data['message'] ?? "KRS berhasil disimpan";
+
+      if (response.statusCode == 201 || response.statusCode == 202) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Gagal mengirim data ke server"),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text(msg), backgroundColor: Colors.green),
         );
+
+        semesterController.clear();
+        _formKey.currentState!.reset();
+
+        await _getDaftarKrs();
       }
     } on DioException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Error: ${e.response?.data['message'] ?? e.message}"),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Terjadi kesalahan: $e"),
+          content: Text(e.response?.data['message'] ?? "Gagal menyimpan data"),
           backgroundColor: Colors.red,
         ),
       );
@@ -106,39 +118,32 @@ class _InputKrsPageState extends State<InputKrsPage> {
     }
   }
 
-  // ===== GET DAFTAR KRS BERDASARKAN NIM =====
+  // ==============================
+  // GET DAFTAR KRS
+  // ==============================
   Future<void> _getDaftarKrs() async {
-    setState(() {
-      isFetchingKrs = true;
-      daftarKrs = [];
-    });
+    if (user == null) return;
 
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token');
-
-    Dio dio = Dio();
-    dio.options.headers['Authorization'] = 'Bearer $token';
-
-    final String url =
-        '${ApiService.baseUrl}krs/daftar-krs?id_mahasiswa=${user?['nim']}';
+    setState(() => isFetchingKrs = true);
 
     try {
-      final response = await dio.get(url);
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('auth_token');
 
-      if (response.statusCode == 200 && response.data['status'] == 200) {
+      Dio dio = Dio();
+      dio.options.headers['Authorization'] = 'Bearer $token';
+
+      final response = await dio.get(
+        "${ApiService.baseUrl}krs/daftar-krs?id_mahasiswa=${user!['nim']}",
+      );
+
+      if (response.statusCode == 200) {
         setState(() {
           daftarKrs = response.data['data'] ?? [];
         });
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.data['msg'] ?? 'Gagal memuat daftar KRS'),
-            backgroundColor: Colors.orange,
-          ),
-        );
       }
     } catch (e) {
-      debugPrint('Error get daftar KRS: $e');
+      debugPrint("ERROR GET KRS: $e");
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Gagal memuat daftar KRS"),
@@ -155,122 +160,134 @@ class _InputKrsPageState extends State<InputKrsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Input KRS"),
-        backgroundColor: Colors.deepPurple,
+        backgroundColor: Colors.blue,
       ),
-      body: user == null
+      body: isFetching
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  // ===== FORM INPUT KRS =====
-                  Form(
-                    key: _formKey,
-                    child: Column(
-                      children: [
-                        TextFormField(
-                          controller: semesterController,
-                          decoration: InputDecoration(
-                            labelText: "Semester",
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                          validator: (value) => value == null || value.isEmpty
-                              ? "Semester wajib diisi"
-                              : null,
-                        ),
-                        const SizedBox(height: 20),
+          : _buildContent(),
+    );
+  }
 
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: isLoading ? null : _submitKrs,
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.deepPurple,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                            icon: isLoading
-                                ? const SizedBox(
-                                    width: 20,
-                                    height: 20,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Icon(Icons.save),
-                            label: Text(
-                              isLoading ? "Menyimpan..." : "Simpan KRS",
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                          ),
-                        ),
-                      ],
+  // ==============================
+  // UI CONTENT
+  // ==============================
+  Widget _buildContent() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          // FORM INPUT
+          Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                TextFormField(
+                  controller: semesterController,
+                  decoration: InputDecoration(
+                    labelText: "Semester",
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
+                  validator: (value) => value == null || value.isEmpty
+                      ? "Semester wajib diisi"
+                      : null,
+                ),
+                const SizedBox(height: 20),
 
-                  const SizedBox(height: 30),
-
-                  // ===== DAFTAR KRS =====
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      "Daftar KRS Mahasiswa",
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepPurple.shade700,
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: isLoading ? null : _submitKrs,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 10),
-
-                  if (isFetchingKrs)
-                    const Center(child: CircularProgressIndicator())
-                  else if (daftarKrs.isEmpty)
-                    const Text("Belum ada data KRS yang tersimpan.")
-                  else
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: daftarKrs.length,
-                      itemBuilder: (context, index) {
-                        final krs = daftarKrs[index];
-                        final semester = krs['semester']?.toString() ?? '-';
-                        final tahun = krs['tahun_ajaran'] ?? '-';
-
-                        return Card(
-                          elevation: 3,
-                          margin: const EdgeInsets.symmetric(vertical: 6),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: ListTile(
-                            leading: const Icon(
-                              Icons.book,
-                              color: Colors.deepPurple,
+                    icon: isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
                             ),
-                            title: Text(
-                              "KRS Anda",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            subtitle: Text(
-                              "Semester: $semester | Tahun: $tahun",
-                              style: const TextStyle(fontSize: 13),
-                            ),
-                          ),
-                        );
-                      },
+                          )
+                        : const Icon(Icons.save),
+                    label: Text(
+                      isLoading ? "Menyimpan..." : "Simpan KRS",
+                      style: const TextStyle(fontSize: 16),
                     ),
-                ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 30),
+
+          // LIST KRS
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              "Daftar KRS Mahasiswa",
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue.shade700,
               ),
             ),
+          ),
+          const SizedBox(height: 10),
+
+          if (isFetchingKrs)
+            const Center(child: CircularProgressIndicator())
+          else if (daftarKrs.isEmpty)
+            const Text("Belum ada data KRS.")
+          else
+            ListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: daftarKrs.length,
+              itemBuilder: (context, index) {
+                final krs = daftarKrs[index];
+                return Card(
+                  elevation: 3,
+                  margin: const EdgeInsets.symmetric(vertical: 6),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: ListTile(
+                    leading: const Icon(Icons.book, color: Colors.blue),
+                    title: const Text(
+                      "KRS Anda",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      "Semester: ${krs['semester']} | Tahun: ${krs['tahun_ajaran']}",
+                      style: const TextStyle(fontSize: 13),
+                    ),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 18),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => KrsDetailPage(
+                            idKrs: krs['id'],
+                            semester: krs['semester']?.toString() ?? "-",
+                            tahunAjaran: krs['tahun_ajaran']?.toString() ?? "-",
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
     );
   }
 }

@@ -8,6 +8,15 @@ import 'package:siakad/pages/login_pages.dart';
 import 'package:siakad/api/api_service.dart';
 
 void main() {
+  ui_web.platformViewRegistry.registerViewFactory('webcam-view', (int viewId) {
+    final div = html.DivElement()
+      ..id = "camera-container"
+      ..style.width = "100%"
+      ..style.height = "100%"
+      ..style.backgroundColor = "black";
+
+    return div;
+  });
   // REGISTER HTML VIEW UNTUK MAP
   ui_web.platformViewRegistry.registerViewFactory('maps-view', (int viewId) {
     final iframe = html.IFrameElement()

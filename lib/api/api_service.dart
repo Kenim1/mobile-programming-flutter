@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
+  // PASTIKAN URL INI BENAR DAN SERVER BERJALAN!
   static const String baseUrl = 'http://36.88.99.179:8000/api/';
 
   // Login method
@@ -30,6 +31,38 @@ class ApiService {
       return response.data;
     } catch (e) {
       return {'error': e.toString()};
+    }
+  }
+
+  // Absensi method
+  static Future<Map<String, dynamic>> submitAbsen({
+    required int idKrsDetail,
+    required double latitude,
+    required double longitude,
+    required String token,
+  }) async {
+    try {
+      Dio dio = Dio();
+      dio.options.headers['Authorization'] = 'Bearer $token';
+      
+      // PASTIKAN ENDPOINT INI COCOK DENGAN BACKEND ANDA!
+      final response = await dio.post(
+        "${baseUrl}krs/absen", 
+        data: {
+          'id_krs_detail': idKrsDetail,
+          'latitude': latitude,
+          'longitude': longitude,
+        },
+      );
+      
+      return response.data;
+    } on DioException catch (e) {
+      if (e.response != null) {
+         return {'error': true, 'message': e.response!.data['message'] ?? 'Error dari server'};
+      }
+      return {'error': true, 'message': 'Koneksi gagal atau server tidak merespons'};
+    } catch (e) {
+      return {'error': true, 'message': e.toString()};
     }
   }
 

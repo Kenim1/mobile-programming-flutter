@@ -1,9 +1,9 @@
+// File: lib/pages/absen_page.dart
+
 import 'package:flutter/material.dart';
-import 'package:dio/dio.dart';
-import 'detail_absensi_page.dart'; 
-import '../api/api_service.dart';
-import 'absen_submit_page.dart'; 
-import '../widgets/bottom_nav.dart'; 
+import 'package:geolocator/geolocator.dart'; 
+import 'package:shared_preferences/shared_preferences.dart'; // Digunakan untuk mendapatkan token
+import '../api/api_service.dart'; // Digunakan untuk memanggil API Absensi
 
 class AbsenPage extends StatefulWidget {
   final int idKrsDetail;
@@ -20,185 +20,311 @@ class AbsenPage extends StatefulWidget {
 }
 
 class _AbsenPageState extends State<AbsenPage> {
-  // FIX 2: Ubah final Color menjadi final Color
   final Color primaryColor = const Color(0xFF003366);
-  final Color accentColor = const Color(0xFFF7931E);
+  final Color accentColor = const Color(0xFFF79931E);
+
+  // Status Lokasi
+  Position? _currentPosition;
+  bool _isLocationServiceEnabled = false;
   
-  // FIX 3: Gunakan MaterialColor atau tentukan warna untuk shade
-  final MaterialColor successColor = Colors.green; 
+  // Status Absensi Dummy (Waktu Kuliah) - HARUS DIGANTI DENGAN LOGIKA WAKTU NYATA
+  bool _isAbsenTime = true; 
+  
+  // Koordinat Kampus (HARUS DIGANTI dengan koordinat kampus Anda)
+// File: lib/pages/absen_page.dart
 
-  bool isLoading = true; 
-  List<bool> statusAbsenPertemuan = List.generate(16, (index) => false); 
+// ... sekitar baris 40
 
+// Koordinat Kampus (DIUBAH SEMENTARA UNTUK PENGUJIAN)
+static const double _targetLatitude = -7.435895655096047; // <--- GANTI DI SINI
+static const double _targetLongitude = 109.26229870593076; // <--- GANTI DI SINI
+static const double _maxDistanceMeters = 50.0; // Toleransi jarak (50 meter)
+
+// ...
   @override
   void initState() {
     super.initState();
-    // loadStatusAbsen(); 
-    
-    Future.delayed(const Duration(milliseconds: 800), () {
+    _checkPermissionAndGetLocation();
+  }
+
+  // ====== FUNGSI GEOLOCATOR (DAPATKAN LOKASI) ======
+  Future<void> _checkPermissionAndGetLocation() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
       setState(() {
-        for(int i = 0; i < 16; i++) {
-          if (i % 3 == 0) statusAbsenPertemuan[i] = true;
-        }
-        isLoading = false;
+        _isLocationServiceEnabled = false;
+      });
+      return;
+    }
+    setState(() {
+      _isLocationServiceEnabled = true;
+    });
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return;
+    }
+
+    _getLiveLocation();
+  }
+
+  void _getLiveLocation() {
+    Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.best,
+        distanceFilter: 10, 
+      ),
+    ).listen((Position position) {
+      setState(() {
+        _currentPosition = position;
       });
     });
   }
 
-  // ... (Fungsi loadStatusAbsen() Anda tetap sama)
+  // Hitung Jarak
+  bool _isWithinRange() {
+    if (_currentPosition == null) return false;
+    
+    double distance = Geolocator.distanceBetween(
+      _currentPosition!.latitude,
+      _currentPosition!.longitude,
+      _targetLatitude,
+      _targetLongitude,
+    );
+    
+    return distance <= _maxDistanceMeters;
+  }
+  // ===================================================
+
+  // ====== FUNGSI ABSENSI (Aksi Tombol: Panggil API) ======
+  void _submitAbsen() async { 
+    if (_currentPosition == null || !_isAbsenTime) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Anda tidak berada dalam waktu atau lokasi absensi yang valid.')),
+      );
+      return;
+    }
+
+    if (!_isWithinRange()) {
+       ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Anda berada di luar radius kampus yang diizinkan (50 meter).')),
+      );
+      return;
+    }
+
+    // 1. Ambil Token
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString("auth_token");
+    
+    if (token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Sesi pengguna berakhir. Silakan login kembali.')),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Mengirim data absensi...')),
+    );
+
+    // 2. Panggil API Service
+    final result = await ApiService.submitAbsen(
+      idKrsDetail: widget.idKrsDetail,
+      latitude: _currentPosition!.latitude,
+      longitude: _currentPosition!.longitude,
+      token: token,
+    );
+
+    // 3. Tangani Hasil
+    ScaffoldMessenger.of(context).hideCurrentSnackBar(); 
+    
+    if (result.containsKey('error') && result['error'] == true) {
+      // GAGAL
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Gagal Absen: ${result['message']}"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } else {
+      // SUKSES
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? "Absensi berhasil untuk ${widget.namaMatkul}!"),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.pop(context);
+    }
+  }
+  // ===========================================
 
   @override
   Widget build(BuildContext context) {
+    bool canAbsen = _currentPosition != null && _isWithinRange() && _isAbsenTime;
+    
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          "Absensi Mata Kuliah",
-          // FIX: Hapus const
-          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-        ),
-        // Color sudah diatur di main.dart AppBarTheme, tapi jika ingin override:
-        // backgroundColor: primaryColor, 
-        // iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text("Halaman Absensi"),
+        backgroundColor: primaryColor,
+        foregroundColor: Colors.white,
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            width: double.infinity,
-            decoration: BoxDecoration(
-              // FIX: Hapus const
-              color: primaryColor.withOpacity(0.05),
-              border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Detail Mata Kuliah
+            _buildInfoCard(
+              title: widget.namaMatkul,
+              subtitle: 'ID KRS Detail: ${widget.idKrsDetail}',
+              icon: Icons.school,
             ),
-            child: Text(
-              widget.namaMatkul,
-              // FIX: Hapus const
-              style: TextStyle( 
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: primaryColor,
+            
+            const SizedBox(height: 20),
+
+            // Status Lokasi (Pengecekan Geolocation)
+            _buildStatusCard(),
+
+            const SizedBox(height: 20),
+
+            // Posisi Saat Ini
+            _buildCurrentPositionCard(),
+
+            const SizedBox(height: 30),
+
+            // Tombol Utama Absensi
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: canAbsen ? _submitAbsen : null, 
+                icon: const Icon(Icons.check_circle),
+                label: Text(
+                  canAbsen ? "ABSEN SEKARANG" : "Tidak Dapat Absen (Cek Status di Atas)",
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: accentColor,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                ),
               ),
             ),
-          ),
-          
-          Expanded(
-            child: isLoading
-                // FIX: Hapus const
-                ? Center(child: CircularProgressIndicator(color: primaryColor)) 
-                : ListView.builder(
-                    padding: const EdgeInsets.all(12),
-                    itemCount: 16,
-                    itemBuilder: (context, index) {
-                      final pertemuan = index + 1;
-                      final isDone = index < statusAbsenPertemuan.length 
-                                      ? statusAbsenPertemuan[index] 
-                                      : false;
-
-                      return _buildPertemuanCard(pertemuan, isDone, context);
-                    },
-                  ),
-          ),
-        ],
+            
+            if (!canAbsen)
+              Padding(
+                padding: const EdgeInsets.only(top: 10.0),
+                child: Text(
+                  "* Pastikan waktu kuliah sedang berlangsung, GPS aktif, dan Anda berada dalam radius kampus.",
+                  style: TextStyle(color: Colors.red.shade700, fontSize: 12),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildPertemuanCard(int pertemuan, bool isDone, BuildContext context) {
+  Widget _buildInfoCard({required String title, required String subtitle, required IconData icon}) {
     return Card(
       elevation: 4,
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(15),
-        side: isDone ? BorderSide(color: successColor.shade400, width: 2) : BorderSide.none,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: ListTile(
+        leading: Icon(icon, color: primaryColor, size: 40),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+        subtitle: Text(subtitle),
       ),
+    );
+  }
+
+  Widget _buildStatusCard() {
+    Color statusColor = _isLocationServiceEnabled 
+        ? (_currentPosition != null && _isWithinRange() ? Colors.green : Colors.orange)
+        : Colors.red;
+    
+    IconData statusIcon = _isLocationServiceEnabled 
+        ? (_currentPosition != null && _isWithinRange() ? Icons.check_circle : Icons.warning)
+        : Icons.error;
+    
+    String rangeText = _currentPosition != null 
+        ? (_isWithinRange() ? "Anda berada di area yang diizinkan." : "Anda berada di luar batas area kampus.")
+        : "Menunggu posisi...";
+    
+    return Card(
+      elevation: 4,
+      color: statusColor.withOpacity(0.1),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: statusColor)),
       child: Padding(
         padding: const EdgeInsets.all(15.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                Icon(statusIcon, color: statusColor),
+                const SizedBox(width: 10),
                 Text(
-                  "Pertemuan $pertemuan",
-                  // FIX: Hapus const
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: primaryColor,
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: isDone ? successColor.shade100 : accentColor.withOpacity(0.1), 
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    isDone ? "SUDAH ABSEN" : "BELUM ABSEN",
-                    style: TextStyle(
-                      // FIX: Sekarang successColor dan accentColor adalah MaterialColor/Color.
-                      // Jika accentColor dideklarasikan di main.dart (Color), .shade800 tidak akan bekerja.
-                      // Saya asumsikan accentColor Anda di MainWrapper adalah Color, jadi kita pakai warna utama saja.
-                      color: isDone ? successColor.shade800 : accentColor, 
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
+                  "Status Lokasi Absensi",
+                  style: TextStyle(fontWeight: FontWeight.bold, color: statusColor, fontSize: 16),
                 ),
               ],
             ),
-            const Divider(height: 20),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                // FIX: Hapus const
-                style: ElevatedButton.styleFrom( 
-                  backgroundColor: isDone ? primaryColor : accentColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  elevation: 5,
-                ),
-                onPressed: () {
-                  if (isDone) {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        // FIX 4: Gunakan DetailAbsensiPages (pastikan nama widget ini benar di file Anda)
-                        builder: (_) => DetailAbsensiPage(
-                          idKrsDetail: widget.idKrsDetail,
-                          pertemuan: pertemuan,
-                          namaMatkul: widget.namaMatkul,
-                        ),
-                      ),
-                    ).then((_) => setState(() {})); 
-                  } else {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => AbsenSubmitPage(
-                          idKrsDetail: widget.idKrsDetail,
-                          pertemuan: pertemuan,
-                          namaMatkul: widget.namaMatkul,
-                        ),
-                      ),
-                    ).then((_) => setState(() {})); 
-                  }
-                },
-                // FIX: Hapus const
-                icon: Icon(isDone ? Icons.visibility : Icons.qr_code_scanner), 
-                label: Text(
-                  // FIX 5: Teks ini tidak bisa constant karena isDone adalah variabel
-                  isDone ? "LIHAT DETAIL ABSENSI" : "LAKUKAN ABSENSI SEKARANG", 
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-            ),
+            const Divider(),
+            _buildDetailRow(Icons.gps_fixed, "GPS", _isLocationServiceEnabled ? "Aktif" : "Nonaktif", _isLocationServiceEnabled ? Colors.green : Colors.red),
+            _buildDetailRow(Icons.location_on, "Radius Kampus", rangeText, _isWithinRange() ? Colors.green : Colors.red),
+            _buildDetailRow(Icons.timer, "Waktu Absen", _isAbsenTime ? "MASA KULIAH BERLANGSUNG" : "Di Luar Waktu Kuliah", _isAbsenTime ? Colors.green : Colors.red),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCurrentPositionCard() {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(15.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("Data Geolocation (Debugging)", style: TextStyle(fontWeight: FontWeight.bold, color: primaryColor)),
+            const Divider(),
+            _buildDetailRow(Icons.my_location, "Latitude", _currentPosition?.latitude.toStringAsFixed(6) ?? "N/A", Colors.black),
+            _buildDetailRow(Icons.my_location, "Longitude", _currentPosition?.longitude.toStringAsFixed(6) ?? "N/A", Colors.black),
+            _buildDetailRow(Icons.location_searching, "Akurasi", _currentPosition?.accuracy.toStringAsFixed(2) ?? "N/A", Colors.black),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String label, String value, Color valueColor) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: Colors.grey),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 120, 
+            child: Text('$label:', style: const TextStyle(fontWeight: FontWeight.w600)),
+          ),
+          Expanded(
+            child: Text(value, style: TextStyle(color: valueColor, fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }

@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
-// import '../widgets/bottom_nav.dart'; // Import ini dihapus karena redundan/tidak dipakai di sini
 import '../api/api_service.dart';
 import './detail_berita_pages.dart';
-import './matakuliah_page.dart';
+import './jadwal_page.dart'; // Import JadwalPage
 import './profile_pages.dart';
 import './input_krs_page.dart';
 
@@ -26,7 +25,7 @@ class _DashboardPagesState extends State<DashboardPages> {
   final List<Map<String, dynamic>> menuItems = const [
     {"icon": Icons.school, "label": "KRS"},
     {"icon": Icons.grade, "label": "KHS"},
-    {"icon": Icons.calendar_month, "label": "Matakuliah"},
+    {"icon": Icons.calendar_month, "label": "Matakuliah"}, // Menu ini navigasi ke JadwalPage
     {"icon": Icons.person, "label": "Profil"},
     {"icon": Icons.bar_chart, "label": "IPK"},
     {"icon": Icons.help, "label": "Bantuan"},
@@ -85,9 +84,10 @@ class _DashboardPagesState extends State<DashboardPages> {
   // ====== HANDLE MENU CLICK ======
   void _onMenuTap(String label) {
     if (label == "Matakuliah") {
+      // NAVIGASI KE JADWALPAGE
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const DaftarMatakuliahPage()),
+        MaterialPageRoute(builder: (context) => const JadwalPage()),
       );
     } else if (label == "Profil") {
       Navigator.push(
@@ -123,11 +123,11 @@ class _DashboardPagesState extends State<DashboardPages> {
               padding: const EdgeInsets.all(16), 
               child: Column(
                 children: [
-                  // ===== PROFILE CARD (REDESIGN) =====
+                  // ===== PROFILE CARD =====
                   Container(
                     padding: const EdgeInsets.all(18), 
                     decoration: BoxDecoration(
-                      color: primaryColor, // Latar belakang card Navy
+                      color: primaryColor, 
                       borderRadius: BorderRadius.circular(15),
                       boxShadow: const [
                         BoxShadow(
@@ -187,7 +187,7 @@ class _DashboardPagesState extends State<DashboardPages> {
 
                   const SizedBox(height: 30),
 
-                  // ===== MENU GRID (REDESIGN) =====
+                  // ===== MENU GRID =====
                   GridView.count(
                     crossAxisCount: 4,
                     shrinkWrap: true,
@@ -228,7 +228,7 @@ class _DashboardPagesState extends State<DashboardPages> {
 
                   const SizedBox(height: 30),
 
-                  // ===== BERITA AKADEMIK (REDESIGN LIST) =====
+                  // ===== BERITA AKADEMIK LIST =====
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
@@ -251,7 +251,6 @@ class _DashboardPagesState extends State<DashboardPages> {
                           itemBuilder: (context, index) {
                             final berita = beritaAkademik[index];
                             final judul = berita["judul"] ?? "Tanpa Judul";
-                            // final slug = berita["slug"] ?? ""; // Tidak dipakai
                             final tanggal = berita["createdAt"] ?? "";
 
                             return Card(
@@ -302,7 +301,6 @@ class _DashboardPagesState extends State<DashboardPages> {
                 ],
               ),
             ),
-      // BARIS INI (bottomNavigationBar) SUDAH DIHAPUS
     );
   }
 }

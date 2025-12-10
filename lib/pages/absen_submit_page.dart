@@ -34,12 +34,15 @@ class _AbsenSubmitPageState extends State<AbsenSubmitPage> {
   bool isCameraReady = false;
   bool isSubmitting = false;
 
+  // Warna konsisten
+  const Color primaryColor = Color(0xFF003366); 
+  const Color accentColor = Color(0xFFF7931E);
+
   @override
   void initState() {
     super.initState();
 
     /// TIDAK BOLEH init kamera di sini (DOM belum ada)
-    /// Jadi kita tunda setelah build selesai
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initializeCameraAfterRender();
     });
@@ -101,7 +104,9 @@ class _AbsenSubmitPageState extends State<AbsenSubmitPage> {
     setState(() => position = pos);
   }
 
+  // FUNGSI INI SUDAH DIMODIFIKASI DENGAN LOGIKA GEO-FENCING
   Future<void> _submitAbsen() async {
+    // --- 1. VALIDASI FOTO DAN LOKASI ---
     if (imageBytes == null) {
       ScaffoldMessenger.of(
         context,
@@ -115,6 +120,37 @@ class _AbsenSubmitPageState extends State<AbsenSubmitPage> {
       return;
     }
 
+    // --- 2. LOGIKA GEO-FENCING ---
+    // Koordinat Kampus (Titik Pusat Geo-Fence)
+    const double campusLat = -7.439289057458994; // LATITUDE KAMPUS
+    const double campusLng = 109.26620032849641; // LONGITUDE KAMPUS
+    const double maxDistance = 100; // Maksimal 100 meter
+
+    // Menghitung jarak (menggunakan library geolocator)
+    double distanceInMeters = Geolocator.distanceBetween(
+      position!.latitude,
+      position!.longitude,
+      campusLat,
+      campusLng,
+    );
+
+    debugPrint("Jarak dari kampus: $distanceInMeters meter");
+
+    // Geo-Fencing Check
+    if (distanceInMeters > maxDistance) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(
+        const SnackBar(
+          content: Text("GAGAL! Absensi hanya bisa dilakukan dalam radius 100 meter dari kampus."),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return; // Menghentikan proses submit
+    }
+    // --- AKHIR LOGIKA GEO-FENCING ---
+
+    // Jika lolos Geo-Fencing:
     setState(() => isSubmitting = true);
 
     try {
@@ -157,58 +193,107 @@ class _AbsenSubmitPageState extends State<AbsenSubmitPage> {
         title: Text(
           "Absen - ${widget.namaMatkul} (Pertemuan ${widget.pertemuan})",
         ),
-        backgroundColor: Colors.blue,
+        // App Bar sudah menggunakan tema global (primaryColor/Navy) dari main.dart
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Kamera:", style: TextStyle(fontSize: 16)),
+            const Text("Kamera:", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
 
             Container(
               height: 240,
-              color: Colors.black,
+              decoration: BoxDecoration(
+                color: Colors.black,
+                borderRadius: BorderRadius.circular(10),
+              ),
               child: const HtmlElementView(viewType: 'webcam-view'),
             ),
 
             const SizedBox(height: 12),
-            ElevatedButton.icon(
-              onPressed: isCameraReady ? _capturePhoto : null,
-              icon: const Icon(Icons.camera),
-              label: const Text("Capture Foto"),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                ),
+                onPressed: isCameraReady ? _capturePhoto : null,
+                icon: const Icon(Icons.camera_alt),
+                label: const Text("Capture Foto", style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
             ),
 
             if (imageBytes != null) ...[
               const SizedBox(height: 20),
-              const Text("Hasil Foto:", style: TextStyle(fontSize: 16)),
+              const Text("Hasil Foto:", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
-              Image.memory(imageBytes!, height: 200),
+              Center(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Image.memory(imageBytes!, height: 200, fit: BoxFit.cover),
+                ),
+              ),
             ],
 
             const Divider(height: 32),
-            const Text("Lokasi:", style: TextStyle(fontSize: 16)),
+            const Text("Status Lokasi:", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            Text(
-              position == null
-                  ? "Belum diambil"
-                  : "Lat: ${position!.latitude}, Lng: ${position!.longitude}",
-            ),
-            ElevatedButton.icon(
-              onPressed: _getLocation,
-              icon: const Icon(Icons.my_location),
-              label: const Text("Ambil Lokasi"),
+            
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                border: Border.all(color: primaryColor.withOpacity(0.5)),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Koordinat Anda:",
+                    style: TextStyle(color: Colors.grey.shade700),
+                  ),
+                  Text(
+                    position == null
+                        ? "Lokasi belum diambil"
+                        : "Lat: ${position!.latitude.toStringAsFixed(6)}, Lng: ${position!.longitude.toStringAsFixed(6)}",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _getLocation,
+                      icon: const Icon(Icons.my_location),
+                      label: const Text("Ambil Lokasi"),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
 
             const SizedBox(height: 25),
             SizedBox(
               width: double.infinity,
+              height: 50,
               child: ElevatedButton(
                 onPressed: isSubmitting ? null : _submitAbsen,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: isSubmitting ? Colors.grey : accentColor,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                ),
                 child: isSubmitting
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text("Submit Absen"),
+                    : const Text("SUBMIT ABSENSI", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               ),
             ),
           ],

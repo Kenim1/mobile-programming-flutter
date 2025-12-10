@@ -18,6 +18,10 @@ class DashboardPages extends StatefulWidget {
 class _DashboardPagesState extends State<DashboardPages> {
   Map<String, dynamic>? user;
   List<dynamic> beritaAkademik = [];
+  
+  // Warna konsisten
+  const Color primaryColor = Color(0xFF003366); 
+  const Color accentColor = Color(0xFFF7931E);
 
   final List<Map<String, dynamic>> menuItems = [
     {"icon": Icons.school, "label": "KRS"},
@@ -106,31 +110,30 @@ class _DashboardPagesState extends State<DashboardPages> {
   Widget build(BuildContext context) {
     final hasFoto =
         (user?["foto"] != null &&
-        (user?["foto"]?.toString().isNotEmpty ?? false));
+            (user?["foto"]?.toString().isNotEmpty ?? false));
 
     return Scaffold(
       appBar: AppBar(
         title: const Text("Dashboard Mahasiswa"),
-        backgroundColor: Colors.blue.shade700,
         centerTitle: true,
       ),
       body: user == null
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: primaryColor))
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16), 
               child: Column(
                 children: [
-                  // ===== PROFILE CARD =====
+                  // ===== PROFILE CARD (REDESIGN) =====
                   Container(
-                    padding: const EdgeInsets.all(15),
+                    padding: const EdgeInsets.all(18), 
                     decoration: BoxDecoration(
-                      color: Colors.blue.shade50,
-                      borderRadius: BorderRadius.circular(12),
-                      boxShadow: [
+                      color: primaryColor, // Latar belakang card Navy
+                      borderRadius: BorderRadius.circular(15),
+                      boxShadow: const [
                         BoxShadow(
-                          color: Colors.black12,
-                          blurRadius: 5,
-                          offset: const Offset(0, 2),
+                          color: Colors.black26,
+                          blurRadius: 8,
+                          offset: Offset(0, 4),
                         ),
                       ],
                     ),
@@ -138,29 +141,42 @@ class _DashboardPagesState extends State<DashboardPages> {
                       children: [
                         CircleAvatar(
                           radius: 35,
+                          backgroundColor: Colors.white,
                           backgroundImage: hasFoto
                               ? NetworkImage(user!["foto"])
-                              : const AssetImage(
-                                      "assets/images/default_user.png",
-                                    )
-                                    as ImageProvider,
+                              : null,
+                          child: !hasFoto
+                              ? const Icon(Icons.person_rounded, color: primaryColor, size: 40)
+                              : null,
                         ),
                         const SizedBox(width: 15),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
+                              const Text(
+                                "Selamat Datang,",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.white70,
+                                ),
+                              ),
                               Text(
                                 user?["nama"] ?? "-",
                                 style: const TextStyle(
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
+                                  color: Colors.white,
                                 ),
                               ),
-                              Text(user?["email"] ?? "-"),
-                              Text(user?["nim"] ?? "-"),
+                              const SizedBox(height: 4),
+                              Text(
+                                user?["nim"] ?? "-",
+                                style: const TextStyle(color: Colors.white),
+                              ),
                               Text(
                                 "${user?["program_studi"]?["nama_prodi"] ?? '-'} - ${user?["angkatan"] ?? '-'}",
+                                style: const TextStyle(color: Colors.white70, fontSize: 13),
                               ),
                             ],
                           ),
@@ -169,9 +185,9 @@ class _DashboardPagesState extends State<DashboardPages> {
                     ),
                   ),
 
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 30),
 
-                  // ===== MENU GRID =====
+                  // ===== MENU GRID (REDESIGN) =====
                   GridView.count(
                     crossAxisCount: 4,
                     shrinkWrap: true,
@@ -184,18 +200,24 @@ class _DashboardPagesState extends State<DashboardPages> {
                             onTap: () => _onMenuTap(item["label"]),
                             child: Column(
                               children: [
-                                CircleAvatar(
-                                  radius: 28,
-                                  backgroundColor: Colors.blue.shade100,
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: primaryColor.withOpacity(0.1), 
+                                    borderRadius: BorderRadius.circular(15),
+                                    border: Border.all(color: primaryColor.withOpacity(0.3), width: 1),
+                                  ),
                                   child: Icon(
                                     item["icon"],
-                                    color: Colors.blue.shade800,
+                                    color: primaryColor, 
+                                    size: 30,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
                                   item["label"],
-                                  style: const TextStyle(fontSize: 12),
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: primaryColor),
                                 ),
                               ],
                             ),
@@ -204,17 +226,17 @@ class _DashboardPagesState extends State<DashboardPages> {
                         .toList(),
                   ),
 
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 30),
 
-                  // ===== BERITA AKADEMIK (CARD LIST) =====
+                  // ===== BERITA AKADEMIK (REDESIGN LIST) =====
                   Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      "Berita Akademik",
+                      "Berita & Informasi",
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blue.shade800,
+                        color: primaryColor,
                       ),
                     ),
                   ),
@@ -233,15 +255,22 @@ class _DashboardPagesState extends State<DashboardPages> {
                             final tanggal = berita["createdAt"] ?? "";
 
                             return Card(
-                              elevation: 3,
+                              elevation: 4,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               margin: const EdgeInsets.only(bottom: 12),
                               child: ListTile(
-                                leading: const Icon(
-                                  Icons.article_rounded,
-                                  color: Colors.blue,
+                                leading: Container(
+                                  padding: const EdgeInsets.all(6),
+                                  decoration: BoxDecoration(
+                                    color: accentColor.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Icon(
+                                    Icons.article_rounded,
+                                    color: accentColor, 
+                                  ),
                                 ),
                                 title: Text(
                                   judul,
@@ -249,24 +278,14 @@ class _DashboardPagesState extends State<DashboardPages> {
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                subtitle: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const SizedBox(height: 5),
-                                    Text(
-                                      slug,
-                                      style: const TextStyle(fontSize: 13),
-                                    ),
-                                    const SizedBox(height: 5),
-                                    Text(
-                                      "Tanggal: $tanggal",
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                  ],
+                                subtitle: Text(
+                                  "Tanggal: ${tanggal.split('T').first}", 
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade600,
+                                  ),
                                 ),
+                                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                                 onTap: () {
                                   Navigator.push(
                                     context,

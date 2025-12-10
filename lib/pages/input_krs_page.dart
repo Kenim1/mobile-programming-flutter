@@ -14,6 +14,10 @@ class InputKrsPage extends StatefulWidget {
 class _InputKrsPageState extends State<InputKrsPage> {
   Map<String, dynamic>? user;
 
+  // Warna konsisten
+  const Color primaryColor = Color(0xFF003366); 
+  const Color accentColor = Color(0xFFF7931E);
+
   final _formKey = GlobalKey<FormState>();
   final TextEditingController semesterController = TextEditingController();
 
@@ -27,6 +31,22 @@ class _InputKrsPageState extends State<InputKrsPage> {
   void initState() {
     super.initState();
     _loadInitialData();
+  }
+
+  // --- HELPER UNTUK TEXT FIELD DESIGN ---
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, color: primaryColor),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: primaryColor, width: 2),
+      ),
+      contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+    );
   }
 
   // ==============================
@@ -65,12 +85,7 @@ class _InputKrsPageState extends State<InputKrsPage> {
       });
     } catch (e) {
       debugPrint("ERROR GET USER: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Gagal memuat data mahasiswa"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      // Tidak menampilkan Snackbar di sini agar tidak menumpuk saat startup
     }
   }
 
@@ -96,7 +111,7 @@ class _InputKrsPageState extends State<InputKrsPage> {
 
       final msg = response.data['message'] ?? "KRS berhasil disimpan";
 
-      if (response.statusCode == 201 || response.statusCode == 202) {
+      if (response.statusCode == 201 || response.statusCode == 202 || response.data['status'] == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(msg), backgroundColor: Colors.green),
         );
@@ -105,6 +120,10 @@ class _InputKrsPageState extends State<InputKrsPage> {
         _formKey.currentState!.reset();
 
         await _getDaftarKrs();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(response.data['msg'] ?? "Gagal menyimpan data"), backgroundColor: Colors.red),
+        );
       }
     } on DioException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -137,19 +156,17 @@ class _InputKrsPageState extends State<InputKrsPage> {
         "${ApiService.baseUrl}krs/daftar-krs?id_mahasiswa=${user!['nim']}",
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 && response.data['status'] == 200) {
         setState(() {
           daftarKrs = response.data['data'] ?? [];
+        });
+      } else {
+        setState(() {
+          daftarKrs = [];
         });
       }
     } catch (e) {
       debugPrint("ERROR GET KRS: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Gagal memuat daftar KRS"),
-          backgroundColor: Colors.red,
-        ),
-      );
     } finally {
       setState(() => isFetchingKrs = false);
     }
@@ -160,10 +177,10 @@ class _InputKrsPageState extends State<InputKrsPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Input KRS"),
-        backgroundColor: Colors.blue,
+        // Menggunakan tema global (primaryColor/Navy)
       ),
       body: isFetching
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: primaryColor))
           : _buildContent(),
     );
   }
@@ -173,56 +190,68 @@ class _InputKrsPageState extends State<InputKrsPage> {
   // ==============================
   Widget _buildContent() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       child: Column(
         children: [
           // FORM INPUT
-          Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                TextFormField(
-                  controller: semesterController,
-                  decoration: InputDecoration(
-                    labelText: "Semester",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: primaryColor.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: primaryColor.withOpacity(0.2)),
+            ),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Buat KRS Baru",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: primaryColor),
                   ),
-                  validator: (value) => value == null || value.isEmpty
-                      ? "Semester wajib diisi"
-                      : null,
-                ),
-                const SizedBox(height: 20),
+                  const SizedBox(height: 15),
+                  TextFormField(
+                    controller: semesterController,
+                    decoration: _inputDecoration("Semester yang Diambil (Contoh: 3)", Icons.format_list_numbered),
+                    keyboardType: TextInputType.number,
+                    validator: (value) => value == null || value.isEmpty
+                        ? "Semester wajib diisi"
+                        : null,
+                  ),
+                  const SizedBox(height: 20),
 
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: isLoading ? null : _submitKrs,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: isLoading ? null : _submitKrs,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        elevation: 5,
+                      ),
+                      icon: isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Icon(Icons.add_to_photos),
+                      label: Text(
+                        isLoading ? "Menyimpan..." : "BUAT KRS",
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                       ),
                     ),
-                    icon: isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : const Icon(Icons.save),
-                    label: Text(
-                      isLoading ? "Menyimpan..." : "Simpan KRS",
-                      style: const TextStyle(fontSize: 16),
-                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
@@ -232,20 +261,28 @@ class _InputKrsPageState extends State<InputKrsPage> {
           Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              "Daftar KRS Mahasiswa",
+              "Daftar Riwayat KRS",
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Colors.blue.shade700,
+                color: primaryColor,
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 15),
 
           if (isFetchingKrs)
-            const Center(child: CircularProgressIndicator())
+            const Center(child: CircularProgressIndicator(color: primaryColor))
           else if (daftarKrs.isEmpty)
-            const Text("Belum ada data KRS.")
+            Container(
+              alignment: Alignment.center,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Text("Belum ada data KRS yang tersimpan.", style: TextStyle(color: Colors.grey)),
+            )
           else
             ListView.builder(
               shrinkWrap: true,
@@ -254,22 +291,29 @@ class _InputKrsPageState extends State<InputKrsPage> {
               itemBuilder: (context, index) {
                 final krs = daftarKrs[index];
                 return Card(
-                  elevation: 3,
-                  margin: const EdgeInsets.symmetric(vertical: 6),
+                  elevation: 5,
+                  margin: const EdgeInsets.symmetric(vertical: 8),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: ListTile(
-                    leading: const Icon(Icons.book, color: Colors.blue),
-                    title: const Text(
-                      "KRS Anda",
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                    leading: CircleAvatar(
+                      backgroundColor: accentColor,
+                      child: Text(
+                        krs['semester']?.toString() ?? '?',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    title: Text(
+                      "KRS Semester ${krs['semester']}",
+                      style: const TextStyle(fontWeight: FontWeight.bold, color: primaryColor),
                     ),
                     subtitle: Text(
-                      "Semester: ${krs['semester']} | Tahun: ${krs['tahun_ajaran']}",
+                      "Tahun Ajaran: ${krs['tahun_ajaran'] ?? '-'}",
                       style: const TextStyle(fontSize: 13),
                     ),
-                    trailing: const Icon(Icons.arrow_forward_ios, size: 18),
+                    trailing: const Icon(Icons.chevron_right, color: primaryColor),
                     onTap: () {
                       Navigator.push(
                         context,
@@ -280,7 +324,10 @@ class _InputKrsPageState extends State<InputKrsPage> {
                             tahunAjaran: krs['tahun_ajaran']?.toString() ?? "-",
                           ),
                         ),
-                      );
+                      ).then((_) {
+                        // Refresh data setelah kembali dari Detail Page (misal ada perubahan)
+                        _getDaftarKrs(); 
+                      });
                     },
                   ),
                 );

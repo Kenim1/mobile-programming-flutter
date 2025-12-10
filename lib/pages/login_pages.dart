@@ -15,6 +15,10 @@ class _LoginPagesState extends State<LoginPages> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   bool isLoading = false;
+  
+  // Warna konsisten
+  const Color primaryColor = Color(0xFF003366); 
+  const Color accentColor = Color(0xFFF7931E);
 
   Future<void> doLogin() async {
     setState(() {
@@ -55,39 +59,90 @@ class _LoginPagesState extends State<LoginPages> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(30.0), // Padding lebih besar
         child: Center(
           child: SingleChildScrollView(
             child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  "Login",
-                  style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+                // --- 1. HEADER BRANDING ---
+                const Icon(
+                  Icons.school, 
+                  size: 80,
+                  color: primaryColor,
                 ),
-                const SizedBox(height: 20),
-                TextField(
+                const SizedBox(height: 10),
+                const Text(
+                  "SIAKAD MOBILE",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: primaryColor),
+                ),
+                const Text(
+                  "STIMIK WIDYA UTAMA",
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                const SizedBox(height: 40),
+
+                // --- 2. INPUT FIELD MODERN ---
+                TextFormField(
                   controller: emailController,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Email',
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: 'Email / NIM',
+                    prefixIcon: const Icon(Icons.person, color: primaryColor),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: primaryColor, width: 2),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 20),
-                TextField(
+                TextFormField(
                   controller: passwordController,
                   obscureText: true,
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
                     labelText: 'Password',
+                    prefixIcon: const Icon(Icons.lock, color: primaryColor),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: primaryColor, width: 2),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () {
-                    isLoading ? null : doLogin();
-                  },
-                  child: Text(isLoading ? 'Loading...' : 'Login'),
+                const SizedBox(height: 30),
+
+                // --- 3. TOMBOL LOGIN BESAR ---
+                SizedBox(
+                  height: 50,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      elevation: 5,
+                    ),
+                    onPressed: () {
+                      isLoading ? null : doLogin();
+                    },
+                    child: Text(
+                      isLoading ? 'Memproses...' : 'LOGIN KE SISTEM',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
                 ),
+                const SizedBox(height: 15),
+
+                // Tombol Register
                 TextButton(
                   onPressed: () {
                     Navigator.push(
@@ -95,7 +150,10 @@ class _LoginPagesState extends State<LoginPages> {
                       MaterialPageRoute(builder: (_) => const RegisterPages()),
                     );
                   },
-                  child: const Text("Belum Punya Akun? Register"),
+                  child: Text(
+                    "Belum Punya Akun? Register",
+                    style: TextStyle(color: accentColor, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             ),

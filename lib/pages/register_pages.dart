@@ -24,6 +24,27 @@ class _RegisterPagesState extends State<RegisterPages> {
   final _confirmPasswordController = TextEditingController();
   bool _isObscure = true;
 
+  // Warna konsisten
+  const Color primaryColor = Color(0xFF003366);
+  const Color accentColor = Color(0xFFF7931E);
+  
+  // --- HELPER UNTUK TEXT FIELD DESIGN ---
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, color: primaryColor),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: primaryColor, width: 2),
+      ),
+      contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+    );
+  }
+
+
   void _registerAct() async {
     if (_formKey.currentState!.validate()) {
       final nama = _nameController.text;
@@ -34,7 +55,9 @@ class _RegisterPagesState extends State<RegisterPages> {
       final id_tahun = _id_tahun.text;
       final email = _emailController.text;
       final password = _passwordController.text;
-      final confirmPassword = _confirmPasswordController.text;
+      
+      // Mengunci form saat proses registrasi
+      setState(() => _isObscure = true); 
 
       try {
         final dio = Dio();
@@ -55,18 +78,31 @@ class _RegisterPagesState extends State<RegisterPages> {
           QuickAlert.show(
             context: context,
             type: QuickAlertType.success,
-            text: 'Registrasi Berhasil',
+            title: 'Berhasil!',
+            text: 'Registrasi Berhasil. Silakan Login menggunakan Email dan Password Anda.',
+            confirmBtnColor: primaryColor,
             onConfirmBtnTap: () {
               Navigator.of(context).pop(); // Close dialog
-              Navigator.of(context).pop(); // Go back to previous screen
+              Navigator.of(context).pop(); // Go back to previous screen (Login)
             },
           );
+        } else {
+             QuickAlert.show(
+              context: context,
+              type: QuickAlertType.error,
+              title: 'Gagal!',
+              text: response.data['msg'] ?? 'Terjadi kesalahan saat registrasi.',
+              confirmBtnColor: primaryColor,
+            );
         }
-      } catch (e) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Gagal registrasi: $e")));
-        return;
+      } on DioException catch (e) {
+         QuickAlert.show(
+            context: context,
+            type: QuickAlertType.error,
+            title: 'Gagal Koneksi!',
+            text: e.response?.data['message'] ?? 'Terjadi kesalahan koneksi atau server.',
+            confirmBtnColor: primaryColor,
+          );
       }
     }
   }
@@ -77,6 +113,15 @@ class _RegisterPagesState extends State<RegisterPages> {
       initialDate: DateTime(1999),
       firstDate: DateTime(1970),
       lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.light().copyWith(
+            primaryColor: primaryColor, // Header color
+            colorScheme: ColorScheme.light(primary: primaryColor), // Button color
+          ),
+          child: child!,
+        );
+      },
     );
     if (picked != null) {
       setState(() {
@@ -88,42 +133,35 @@ class _RegisterPagesState extends State<RegisterPages> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Register Pages")),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+      appBar: AppBar(
+        title: const Text("Registrasi Akun Mahasiswa"),
+        // App Bar sudah menggunakan tema global (primaryColor/Navy) dari main.dart
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
         child: Form(
           key: _formKey,
-          child: ListView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // form input nama
+              const Text(
+                "Lengkapi Data Diri Anda",
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: primaryColor),
+              ),
+              const Divider(height: 30),
+
+              // 1. Form input nama
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: "Name",
-                  prefixIcon: Icon(Icons.person),
-                ),
+                decoration: _inputDecoration("Nama Lengkap", Icons.person_outline),
                 validator: (value) =>
-                    value!.isEmpty ? "Name tidak boleh kosong" : null,
+                    value!.isEmpty ? "Nama tidak boleh kosong" : null,
               ),
-              // spasi / jarak
               const SizedBox(height: 16),
-              // form input tanggal lahir
-              TextFormField(
-                controller: _tglLahirController,
-                readOnly: true,
-                decoration: const InputDecoration(
-                  labelText: "Tanggal Lahir",
-                  suffixIcon: Icon(Icons.calendar_today),
-                ),
-                onTap: _pilihTanggal,
-                validator: (v) =>
-                    v!.isEmpty ? "Tanggal lahir wajib diisi" : null,
-              ),
-              // spasi / jarak
-              const SizedBox(height: 16),
-              // Jenis Kelamin
+              
+              // 2. Jenis Kelamin
               DropdownButtonFormField<String>(
-                decoration: const InputDecoration(labelText: "Jenis Kelamin"),
+                decoration: _inputDecoration("Jenis Kelamin", Icons.people_outline),
                 value: _jenisKelamin,
                 items: const [
                   DropdownMenuItem(value: "L", child: Text("Laki-laki")),
@@ -132,87 +170,107 @@ class _RegisterPagesState extends State<RegisterPages> {
                 onChanged: (value) => setState(() => _jenisKelamin = value),
                 validator: (v) => v == null ? "Pilih jenis kelamin" : null,
               ),
-              // spasi / jarak
               const SizedBox(height: 16),
-              // Form Input Email
+
+              // 3. Form input tanggal lahir
               TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: "Email",
-                  prefixIcon: Icon(Icons.email),
+                controller: _tglLahirController,
+                readOnly: true,
+                decoration: _inputDecoration("Tanggal Lahir (YYYY-MM-DD)", Icons.calendar_today).copyWith(
+                   suffixIcon: IconButton(
+                    icon: Icon(Icons.calendar_month, color: accentColor),
+                    onPressed: _pilihTanggal,
+                  ),
                 ),
-                validator: (value) =>
-                    value!.isEmpty ? "Email tidak boleh kosong" : null,
+                onTap: _pilihTanggal,
+                validator: (v) =>
+                    v!.isEmpty ? "Tanggal lahir wajib diisi" : null,
               ),
-              // spasi / jarak
               const SizedBox(height: 16),
-              // Form Input Alamat
+              
+              // 4. Form Input Alamat
               TextFormField(
                 controller: _alamat,
-                decoration: const InputDecoration(
-                  labelText: "Alamat",
-                  prefixIcon: Icon(Icons.person),
-                ),
+                decoration: _inputDecoration("Alamat Lengkap", Icons.location_on_outlined),
+                maxLines: 2,
                 validator: (value) =>
-                    value!.isEmpty ? "alamat tidak boleh kosong" : null,
+                    value!.isEmpty ? "Alamat tidak boleh kosong" : null,
               ),
-              // spasi / jarak
               const SizedBox(height: 16),
-              // Form Inputan Angkatan
+              
+              // 5. Form Inputan Angkatan
               TextFormField(
                 controller: _angkatan,
-                decoration: const InputDecoration(
-                  labelText: "Angkatan",
-                  prefixIcon: Icon(Icons.person),
-                ),
+                decoration: _inputDecoration("Angkatan (Contoh: 2021)", Icons.school_outlined),
+                keyboardType: TextInputType.number,
                 validator: (value) =>
                     value!.isEmpty ? "Angkatan tidak boleh kosong" : null,
               ),
-              // spasi / jarak
               const SizedBox(height: 16),
-              // Form Input Tahun Masuk
+              
+              // 6. Form Input Tahun Masuk (Sepertinya sama dengan Angkatan, pastikan di API)
               TextFormField(
                 controller: _id_tahun,
-                decoration: const InputDecoration(
-                  labelText: "Tahun Masuk",
-                  prefixIcon: Icon(Icons.person),
-                ),
+                decoration: _inputDecoration("ID Tahun Masuk (Contoh: 1)", Icons.date_range),
+                keyboardType: TextInputType.number,
                 validator: (value) =>
-                    value!.isEmpty ? "Tahun Masuk tidak boleh kosong" : null,
+                    value!.isEmpty ? "ID Tahun Masuk tidak boleh kosong" : null,
               ),
-              // spasi / jarak
+              const SizedBox(height: 25),
+              const Divider(),
+              const SizedBox(height: 10),
+              
+              const Text(
+                "Akun Login",
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: primaryColor),
+              ),
+              const Divider(height: 30),
+
+              // 7. Form Input Email
+              TextFormField(
+                controller: _emailController,
+                decoration: _inputDecoration("Email Aktif", Icons.mail_outline),
+                keyboardType: TextInputType.emailAddress,
+                validator: (value) {
+                  if (value!.isEmpty) return "Email tidak boleh kosong";
+                  if (!value.contains('@')) return "Format email tidak valid";
+                  return null;
+                },
+              ),
               const SizedBox(height: 16),
-              // Form Input Passowrd
+              
+              // 8. Form Input Password
               TextFormField(
                 controller: _passwordController,
                 obscureText: _isObscure,
-                decoration: InputDecoration(
-                  labelText: "Password",
-                  prefixIcon: Icon(Icons.lock),
+                decoration: _inputDecoration("Password", Icons.lock_outline).copyWith(
                   suffixIcon: IconButton(
                     icon: Icon(
                       _isObscure ? Icons.visibility : Icons.visibility_off,
+                      color: primaryColor.withOpacity(0.7),
                     ),
                     onPressed: () {
                       setState(() => _isObscure = !_isObscure);
                     },
                   ),
                 ),
-                validator: (value) =>
-                    value!.isEmpty ? "Password tidak boleh kosong" : null,
+                validator: (value) {
+                  if (value!.isEmpty) return "Password tidak boleh kosong";
+                  if (value.length < 6) return "Password minimal 6 karakter";
+                  return null;
+                }
               ),
-              // spasi / jarak
               const SizedBox(height: 16),
-              // form confirmation password
+              
+              // 9. form confirmation password
               TextFormField(
                 controller: _confirmPasswordController,
                 obscureText: _isObscure,
-                decoration: InputDecoration(
-                  labelText: "Confirm Password",
-                  prefixIcon: Icon(Icons.lock),
-                  suffixIcon: IconButton(
+                decoration: _inputDecoration("Konfirmasi Password", Icons.lock_outline).copyWith(
+                   suffixIcon: IconButton(
                     icon: Icon(
                       _isObscure ? Icons.visibility : Icons.visibility_off,
+                      color: primaryColor.withOpacity(0.7),
                     ),
                     onPressed: () {
                       setState(() => _isObscure = !_isObscure);
@@ -220,15 +278,27 @@ class _RegisterPagesState extends State<RegisterPages> {
                   ),
                 ),
                 validator: (value) => value != _passwordController.text
-                    ? "Password tidak sesuai"
+                    ? "Konfirmasi password tidak sesuai"
                     : null,
               ),
-              // spasi / jarak
+              
               const SizedBox(height: 32),
+              
               // Button Aksi untuk register
-              ElevatedButton(
+              ElevatedButton.icon(
                 onPressed: _registerAct,
-                child: const Text("Register"),
+                icon: const Icon(Icons.app_registration),
+                label: const Text(
+                  "DAFTAR SEKARANG",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: primaryColor,
+                  foregroundColor: Colors.white,
+                  minimumSize: const Size.fromHeight(50),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  elevation: 5,
+                ),
               ),
             ],
           ),

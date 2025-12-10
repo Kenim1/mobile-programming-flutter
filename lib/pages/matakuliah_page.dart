@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
 import '../api/api_service.dart';
+import 'absensi_page.dart'; // Pastikan import AbsenPage sudah ada
 
 class DaftarMatakuliahPage extends StatefulWidget {
   const DaftarMatakuliahPage({super.key});
@@ -14,6 +15,10 @@ class _DaftarMatakuliahPageState extends State<DaftarMatakuliahPage> {
   List<dynamic> daftarMatakuliah = [];
   bool isLoading = true;
   String? errorMessage;
+  
+  // Warna konsisten
+  const Color primaryColor = Color(0xFF003366); 
+  const Color accentColor = Color(0xFFF7931E);
 
   @override
   void initState() {
@@ -34,7 +39,8 @@ class _DaftarMatakuliahPageState extends State<DaftarMatakuliahPage> {
 
       if (response.statusCode == 200 && response.data["status"] == 200) {
         setState(() {
-          daftarMatakuliah = response.data["data"];
+          // Asumsi: data['id'] adalah idKrsDetail yang diperlukan AbsenPage
+          daftarMatakuliah = response.data["data"]; 
           isLoading = false;
         });
       } else {
@@ -60,71 +66,97 @@ class _DaftarMatakuliahPageState extends State<DaftarMatakuliahPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // AppBar sudah menggunakan tema global (primaryColor/Navy) dari main.dart
       appBar: AppBar(
         title: const Text('Daftar Mata Kuliah'),
-        backgroundColor: Colors.blue,
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: primaryColor))
           : errorMessage != null
-          ? Center(
-              child: Text(
-                errorMessage!,
-                style: const TextStyle(color: Colors.red),
-              ),
-            )
-          : ListView.builder(
-              padding: const EdgeInsets.all(12.0),
-              itemCount: daftarMatakuliah.length,
-              itemBuilder: (context, index) {
-                final mk = daftarMatakuliah[index];
-                return Card(
-                  elevation: 4,
-                  margin: const EdgeInsets.symmetric(vertical: 8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              ? Center(
+                  child: Text(
+                    errorMessage!,
+                    style: const TextStyle(color: Colors.red, fontSize: 16),
                   ),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.all(16),
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.blue,
-                      child: Text(
-                        mk['jumlah_sks'].toString(),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.all(12.0),
+                  itemCount: daftarMatakuliah.length,
+                  itemBuilder: (context, index) {
+                    final mk = daftarMatakuliah[index];
+                    
+                    // Cek ketersediaan data kunci
+                    final namaMatkul = mk['nama_matakuliah'] ?? 'Mata Kuliah Tanpa Nama';
+                    final idKrsDetail = mk['id'] as int? ?? 0; // Asumsi 'id' adalah idKrsDetail
+
+                    return Card(
+                      elevation: 5, // Lebih tegas
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    ),
-                    title: Text(
-                      mk['nama_matakuliah'],
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 6),
-                        Text('Kode: ${mk['kode']}'),
-                        Text('Semester: ${mk['semester']}'),
-                      ],
-                    ),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'Anda memilih ${mk['nama_matakuliah']}',
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(16),
+                        leading: Container(
+                          width: 45,
+                          height: 45,
+                          decoration: BoxDecoration(
+                            color: primaryColor,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Center(
+                            child: Text(
+                              mk['jumlah_sks']?.toString() ?? '?',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
                           ),
                         ),
-                      );
-                    },
-                  ),
-                );
-              },
-            ),
+                        title: Text(
+                          namaMatkul,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: primaryColor,
+                          ),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Text('Kode: ${mk['kode'] ?? '-'}'),
+                            Text('Semester: ${mk['semester'] ?? '-'}'),
+                          ],
+                        ),
+                        trailing: Icon(Icons.arrow_forward_ios, size: 18, color: accentColor),
+                        onTap: () {
+                          // Navigasi ke AbsenPage yang sudah kita perbaiki
+                          if (idKrsDetail > 0) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AbsenPage(
+                                  idKrsDetail: idKrsDetail,
+                                  namaMatkul: namaMatkul,
+                                ),
+                              ),
+                            );
+                          } else {
+                             ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('ID Mata Kuliah tidak valid untuk Absensi.'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    );
+                  },
+                ),
     );
   }
 }

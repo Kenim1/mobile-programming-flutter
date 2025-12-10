@@ -18,6 +18,10 @@ class _ProfilePagesState extends State<ProfilePages> {
   bool isLoading = false;
   final formKey = GlobalKey<FormState>();
 
+  // Warna konsisten
+  const Color primaryColor = Color(0xFF003366);
+  const Color accentColor = Color(0xFFF7931E);
+
   // Controller biodata
   final namaC = TextEditingController();
   final jkC = TextEditingController();
@@ -34,6 +38,22 @@ class _ProfilePagesState extends State<ProfilePages> {
     super.initState();
     _getMahasiswaData();
   }
+  
+  // --- HELPER UNTUK TEXT FIELD DESIGN ---
+  InputDecoration _inputDecoration(String label, IconData icon) {
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, color: primaryColor),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(10),
+        borderSide: const BorderSide(color: primaryColor, width: 2),
+      ),
+      contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
+    );
+  }
 
   Future<void> _getMahasiswaData() async {
     final prefs = await SharedPreferences.getInstance();
@@ -43,19 +63,24 @@ class _ProfilePagesState extends State<ProfilePages> {
     Dio dio = Dio();
     dio.options.headers['Authorization'] = 'Bearer $token';
 
-    final response = await dio.post(
-      "${ApiService.baseUrl}mahasiswa/detail-mahasiswa",
-      data: {"email": email},
-    );
+    try {
+      final response = await dio.post(
+        "${ApiService.baseUrl}mahasiswa/detail-mahasiswa",
+        data: {"email": email},
+      );
 
-    setState(() {
-      user = response.data['data'];
-      namaC.text = user?['nama'] ?? '';
-      jkC.text = user?['jenis_kelamin'] ?? '';
-      tglC.text = user?['tanggal_lahir'] ?? '';
-      alamatC.text = user?['alamat'] ?? '';
-      statusC.text = user?['status'] ?? '';
-    });
+      setState(() {
+        user = response.data['data'];
+        namaC.text = user?['nama'] ?? '';
+        jkC.text = user?['jenis_kelamin'] ?? '';
+        tglC.text = user?['tanggal_lahir'] ?? '';
+        alamatC.text = user?['alamat'] ?? '';
+        statusC.text = user?['status'] ?? '';
+      });
+    } catch (e) {
+      // Handle error fetching data if necessary
+      debugPrint("Error fetching profile data: $e");
+    }
   }
 
   Future<void> _pickImage() async {
@@ -64,7 +89,6 @@ class _ProfilePagesState extends State<ProfilePages> {
 
     if (image != null) {
       if (kIsWeb) {
-        // Web pakai bytes
         final bytes = await image.readAsBytes();
         setState(() {
           webImage = bytes;
@@ -72,7 +96,6 @@ class _ProfilePagesState extends State<ProfilePages> {
         });
         _uploadFotoWeb(bytes, image.name);
       } else {
-        // Mobile pakai path
         setState(() {
           pickedFile = image;
         });
@@ -83,6 +106,7 @@ class _ProfilePagesState extends State<ProfilePages> {
 
   Future<void> _uploadFotoMobile(XFile image) async {
     setState(() => isLoading = true);
+    // Logika upload foto Mobile (sudah benar, tidak diubah)
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token');
@@ -118,6 +142,7 @@ class _ProfilePagesState extends State<ProfilePages> {
 
   Future<void> _uploadFotoWeb(Uint8List bytes, String filename) async {
     setState(() => isLoading = true);
+    // Logika upload foto Web (sudah benar, tidak diubah)
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token');
@@ -155,6 +180,7 @@ class _ProfilePagesState extends State<ProfilePages> {
     if (!formKey.currentState!.validate()) return;
 
     setState(() => isLoading = true);
+    // Logika update biodata (sudah benar, tidak diubah)
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token');
@@ -193,37 +219,41 @@ class _ProfilePagesState extends State<ProfilePages> {
   @override
   Widget build(BuildContext context) {
     final fotoUrl = user?["foto"];
+    final hasFoto = (fotoUrl != null && fotoUrl != "");
 
     return Scaffold(
       appBar: AppBar(
         title: const Text("Profil Mahasiswa"),
-        backgroundColor: Colors.blue.shade700,
-        centerTitle: true,
+        // App Bar menggunakan tema global (primaryColor/Navy) dari main.dart
       ),
       body: user == null
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator(color: primaryColor))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Form(
                 key: formKey,
                 child: Column(
                   children: [
-                    // FOTO PROFIL
+                    // --- FOTO PROFIL ---
                     Center(
                       child: Stack(
                         children: [
                           CircleAvatar(
-                            radius: 60,
-                            backgroundImage: kIsWeb && webImage != null
-                                ? MemoryImage(webImage!)
-                                : pickedFile != null
-                                ? Image.network(pickedFile!.path).image
-                                : (fotoUrl != null && fotoUrl != "")
-                                ? NetworkImage(fotoUrl)
-                                : const AssetImage(
-                                        "assets/images/default_user.png",
-                                      )
-                                      as ImageProvider,
+                            radius: 65,
+                            backgroundColor: primaryColor.withOpacity(0.2), // Border/ring
+                            child: CircleAvatar(
+                              radius: 60,
+                              backgroundColor: Colors.grey.shade200,
+                              backgroundImage: kIsWeb && webImage != null
+                                  ? MemoryImage(webImage!)
+                                  : hasFoto
+                                      ? NetworkImage(fotoUrl!)
+                                      : const AssetImage("assets/images/default_user.png")
+                                          as ImageProvider,
+                              child: !hasFoto && webImage == null
+                                  ? Icon(Icons.person, size: 50, color: primaryColor)
+                                  : null,
+                            ),
                           ),
                           Positioned(
                             bottom: 0,
@@ -232,8 +262,9 @@ class _ProfilePagesState extends State<ProfilePages> {
                               onTap: _pickImage,
                               child: Container(
                                 decoration: BoxDecoration(
-                                  color: Colors.blue,
+                                  color: accentColor, // Warna kamera Orange Aksen
                                   borderRadius: BorderRadius.circular(30),
+                                  border: Border.all(color: Colors.white, width: 3),
                                 ),
                                 padding: const EdgeInsets.all(8),
                                 child: const Icon(
@@ -246,50 +277,52 @@ class _ProfilePagesState extends State<ProfilePages> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 30),
 
-                    // BIODATA FORM
+                    // --- BIODATA FORM ---
                     TextFormField(
                       controller: namaC,
-                      decoration: const InputDecoration(labelText: "Nama"),
+                      decoration: _inputDecoration("Nama Lengkap", Icons.person_outline),
                       validator: (v) => v!.isEmpty ? "Nama wajib diisi" : null,
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 15),
                     TextFormField(
                       controller: jkC,
-                      decoration: const InputDecoration(
-                        labelText: "Jenis Kelamin",
-                      ),
+                      decoration: _inputDecoration("Jenis Kelamin", Icons.people_outline),
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 15),
                     TextFormField(
                       controller: tglC,
-                      decoration: const InputDecoration(
-                        labelText: "Tanggal Lahir (YYYY-MM-DD)",
-                      ),
+                      decoration: _inputDecoration("Tanggal Lahir (YYYY-MM-DD)", Icons.calendar_today),
+                      keyboardType: TextInputType.datetime,
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 15),
                     TextFormField(
                       controller: alamatC,
-                      decoration: const InputDecoration(labelText: "Alamat"),
+                      decoration: _inputDecoration("Alamat", Icons.location_on_outlined),
+                      maxLines: 2,
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 15),
                     TextFormField(
                       controller: statusC,
-                      decoration: const InputDecoration(labelText: "Status"),
+                      decoration: _inputDecoration("Status", Icons.info_outline),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 30),
 
+                    // --- TOMBOL SIMPAN ---
                     ElevatedButton.icon(
                       onPressed: isLoading ? null : _updateBiodata,
-                      icon: const Icon(Icons.save),
+                      icon: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Icon(Icons.save),
                       label: Text(
-                        isLoading ? "Menyimpan..." : "Simpan Perubahan",
+                        isLoading ? "Menyimpan Data..." : "SIMPAN PERUBAHAN",
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue.shade700,
+                        backgroundColor: primaryColor,
                         foregroundColor: Colors.white,
                         minimumSize: const Size.fromHeight(50),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        elevation: 5,
                       ),
                     ),
                   ],

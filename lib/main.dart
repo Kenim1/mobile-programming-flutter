@@ -1,38 +1,19 @@
-import 'dart:async';
-import 'dart:html' as html;
 import 'package:flutter/material.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
-import 'package:siakad/pages/dashboard_pages.dart';
-import 'package:siakad/pages/login_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:siakad/widgets/bottom_nav.dart'; 
+// FIX 1: Perbaiki import ke 'login_pages.dart' (dengan 's')
+import 'package:siakad/pages/login_pages.dart'; 
+import 'package:siakad/pages/dashboard_pages.dart';
+import 'package:siakad/api/api_service.dart';
 
-// ignore: avoid_web_libraries_in_flutter
-import './webcam_helper.dart';
+// FIX 2: HAPUS SEMUA kode iframe/webcam/html/ui yang ada di luar main() atau MyApp
+
+// Deklarasikan Warna Global sebagai konstanta di main.dart
+const Color primaryColor = Color(0xFF003366); // Navy Blue (dari seed)
+const Color accentColor = Color(0xFFF7931E); // Orange
 
 void main() {
-  // Hanya jalankan registerViewFactory jika running di Web
-  if (html.Platform.operatingSystem == 'web') {
-    // Registrasi WebView untuk Maps (jika digunakan)
-    // ignore: undefined_prefixed_name
-    ui.platformViewRegistry.registerViewFactory(
-        'maps-view', (int viewId) => html.IFrameElement()
-          ..id = 'map-frame'
-          ..style.border = '0'
-          ..style.width = '100%'
-          ..style.height = '100%'
-          ..src = 'assets/maps_detail_absensi.html');
-          
-    // Registrasi WebView untuk Webcam (sudah ada di kode Anda)
-    // ignore: undefined_prefixed_name
-    ui.platformViewRegistry.registerViewFactory(
-        'webcam-view',
-        (int viewId) => html.DivElement()
-          ..id = 'webcam-container'
-          ..style.width = '100%'
-          ..style.height = '100%'
-          ..style.backgroundColor = 'black');
-  }
-
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
@@ -41,57 +22,48 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Definisikan warna branding kampus
-    const Color primaryColor = Color(0xFF003366); // Navy/Biru Kampus
-
     return MaterialApp(
       title: 'SIAKAD',
       theme: ThemeData(
-        // 1. Tentukan warna dasar/branding kampus
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: primaryColor,
-          primary: primaryColor,
-          secondary: const Color(0xFFF7931E), // Aksen Orange
-        ),
-        // 2. Terapkan Desain Material 3
-        useMaterial3: true,
-        // 3. Terapkan tema AppBar global
+        // FIX 3: Gunakan warna konstan yang sudah dideklarasikan di luar
+        colorScheme: ColorScheme.fromSeed(seedColor: primaryColor),
+        primaryColor: primaryColor,
         appBarTheme: const AppBarTheme(
-          backgroundColor: primaryColor,
-          foregroundColor: Colors.white,
+          backgroundColor: primaryColor, 
           iconTheme: IconThemeData(color: Colors.white),
           titleTextStyle: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-            color: Colors.white,
+            color: Colors.white, 
+            fontWeight: FontWeight.bold, 
+            fontSize: 20
           ),
         ),
+        useMaterial3: true,
       ),
-      // Set ConstrainedBox untuk tampilan mobile di Web
-      builder: (context, child) {
-        return Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: Container(color: Colors.white, child: child),
-          ),
-        );
-      },
-      home: FutureBuilder(
+      
+      // Halaman utama
+      home: FutureBuilder<SharedPreferences>(
         future: SharedPreferences.getInstance(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            // FIX: Hapus const
+            return Center(child: CircularProgressIndicator(color: primaryColor));
           }
+
           final prefs = snapshot.data;
-          final token = prefs?.getString('auth_token');
+          final String? token = prefs?.getString('auth_token');
 
           if (token != null) {
-            return const DashboardPages();
+            // FIX: Gunakan const jika MainWrapper adalah Stateless/Final
+            return const MainWrapper(); 
           } else {
-            return const LoginPages();
+            // FIX: Gunakan const jika LoginPages adalah Stateless/Final
+            return const LoginPages(); 
           }
         },
       ),
     );
   }
 }
+
+// Hapus bagian 'Widget build(BuildContext context)' di Baris 47-54 jika ada duplikasi. 
+// Bagian tersebut tampak seperti sisa kode pengujian web.

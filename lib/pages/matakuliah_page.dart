@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
 import '../api/api_service.dart';
-import 'absensi_page.dart'; // Pastikan import AbsenPage sudah ada
+import 'absen_page.dart'; // Pastikan import AbsenPage sudah ada
 
 class DaftarMatakuliahPage extends StatefulWidget {
   const DaftarMatakuliahPage({super.key});
@@ -17,8 +17,8 @@ class _DaftarMatakuliahPageState extends State<DaftarMatakuliahPage> {
   String? errorMessage;
   
   // Warna konsisten
-  const Color primaryColor = Color(0xFF003366); 
-  const Color accentColor = Color(0xFFF7931E);
+  final Color primaryColor = Color(0xFF003366); 
+  final Color accentColor = Color(0xFFF7931E);
 
   @override
   void initState() {
@@ -68,15 +68,15 @@ class _DaftarMatakuliahPageState extends State<DaftarMatakuliahPage> {
     return Scaffold(
       // AppBar sudah menggunakan tema global (primaryColor/Navy) dari main.dart
       appBar: AppBar(
-        title: const Text('Daftar Mata Kuliah'),
+        title: Text('Daftar Mata Kuliah'),
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: primaryColor))
+          ? Center(child: CircularProgressIndicator(color: primaryColor))
           : errorMessage != null
               ? Center(
                   child: Text(
                     errorMessage!,
-                    style: const TextStyle(color: Colors.red, fontSize: 16),
+                    style: TextStyle(color: Colors.red, fontSize: 16),
                   ),
                 )
               : ListView.builder(
@@ -107,7 +107,7 @@ class _DaftarMatakuliahPageState extends State<DaftarMatakuliahPage> {
                           child: Center(
                             child: Text(
                               mk['jumlah_sks']?.toString() ?? '?',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 18,
@@ -117,7 +117,7 @@ class _DaftarMatakuliahPageState extends State<DaftarMatakuliahPage> {
                         ),
                         title: Text(
                           namaMatkul,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                             color: primaryColor,

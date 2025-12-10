@@ -6,8 +6,8 @@ class DetailBeritaPages extends StatelessWidget {
   const DetailBeritaPages({super.key, required this.berita});
   
   // Warna konsisten
-  static const Color primaryColor = Color(0xFF003366); 
-  static const Color accentColor = Color(0xFFF7931E);
+  static final Color primaryColor = Color(0xFF003366); 
+  static final Color accentColor = Color(0xFFF7931E);
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +17,7 @@ class DetailBeritaPages extends StatelessWidget {
     return Scaffold(
       // AppBar sudah menggunakan tema global (primaryColor/Navy) dari main.dart
       appBar: AppBar(
-        title: const Text("Detail Berita"),
+        title: Text("Detail Berita"),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -28,7 +28,7 @@ class DetailBeritaPages extends StatelessWidget {
             // --- JUDUL BERITA ---
             Text(
               berita["judul"] ?? "Judul Kosong",
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 24, 
                 fontWeight: FontWeight.w900, 
                 color: primaryColor
@@ -39,11 +39,11 @@ class DetailBeritaPages extends StatelessWidget {
             // --- META (TANGGAL) ---
             Row(
               children: [
-                const Icon(Icons.calendar_month, size: 16, color: accentColor),
+                Icon(Icons.calendar_month, size: 16, color: accentColor),
                 const SizedBox(width: 5),
                 Text(
                   "Diterbitkan: $tanggal",
-                  style: const TextStyle(color: Colors.grey, fontSize: 13),
+                  style: TextStyle(color: Colors.grey, fontSize: 13),
                 ),
               ],
             ),
@@ -78,7 +78,7 @@ class DetailBeritaPages extends StatelessWidget {
             // --- ISI BERITA ---
             Text(
               berita["isi"] ?? "Tidak ada isi berita yang tersedia.",
-              style: const TextStyle(fontSize: 16, height: 1.6),
+              style: TextStyle(fontSize: 16, height: 1.6),
               textAlign: TextAlign.justify,
             ),
           ],

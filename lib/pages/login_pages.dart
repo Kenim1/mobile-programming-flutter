@@ -17,8 +17,8 @@ class _LoginPagesState extends State<LoginPages> {
   bool isLoading = false;
   
   // Warna konsisten
-  const Color primaryColor = Color(0xFF003366); 
-  const Color accentColor = Color(0xFFF7931E);
+  final Color primaryColor = Color(0xFF003366); 
+  final Color accentColor = Color(0xFFF7931E);
 
   Future<void> doLogin() async {
     setState(() {
@@ -67,18 +67,18 @@ class _LoginPagesState extends State<LoginPages> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // --- 1. HEADER BRANDING ---
-                const Icon(
+                Icon(
                   Icons.school, 
                   size: 80,
                   color: primaryColor,
                 ),
                 const SizedBox(height: 10),
-                const Text(
+                Text(
                   "SIAKAD MOBILE",
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: primaryColor),
                 ),
-                const Text(
+                Text(
                   "STIMIK WIDYA UTAMA",
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 14, color: Colors.grey),
@@ -91,13 +91,13 @@ class _LoginPagesState extends State<LoginPages> {
                   keyboardType: TextInputType.emailAddress,
                   decoration: InputDecoration(
                     labelText: 'Email / NIM',
-                    prefixIcon: const Icon(Icons.person, color: primaryColor),
+                    prefixIcon: Icon(Icons.person, color: primaryColor),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: primaryColor, width: 2),
+                      borderSide: BorderSide(color: primaryColor, width: 2),
                     ),
                   ),
                 ),
@@ -107,13 +107,13 @@ class _LoginPagesState extends State<LoginPages> {
                   obscureText: true,
                   decoration: InputDecoration(
                     labelText: 'Password',
-                    prefixIcon: const Icon(Icons.lock, color: primaryColor),
+                    prefixIcon: Icon(Icons.lock, color: primaryColor),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(10),
-                      borderSide: const BorderSide(color: primaryColor, width: 2),
+                      borderSide: BorderSide(color: primaryColor, width: 2),
                     ),
                   ),
                 ),

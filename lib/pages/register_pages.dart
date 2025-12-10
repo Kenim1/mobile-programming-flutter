@@ -25,8 +25,8 @@ class _RegisterPagesState extends State<RegisterPages> {
   bool _isObscure = true;
 
   // Warna konsisten
-  const Color primaryColor = Color(0xFF003366);
-  const Color accentColor = Color(0xFFF7931E);
+  final Color primaryColor = Color(0xFF003366);
+  final Color accentColor = Color(0xFFF7931E);
   
   // --- HELPER UNTUK TEXT FIELD DESIGN ---
   InputDecoration _inputDecoration(String label, IconData icon) {
@@ -38,7 +38,7 @@ class _RegisterPagesState extends State<RegisterPages> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: primaryColor, width: 2),
+        borderSide: BorderSide(color: primaryColor, width: 2),
       ),
       contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
     );
@@ -134,7 +134,7 @@ class _RegisterPagesState extends State<RegisterPages> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Registrasi Akun Mahasiswa"),
+        title: Text("Registrasi Akun Mahasiswa"),
         // App Bar sudah menggunakan tema global (primaryColor/Navy) dari main.dart
       ),
       body: SingleChildScrollView(
@@ -144,7 +144,7 @@ class _RegisterPagesState extends State<RegisterPages> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 "Lengkapi Data Diri Anda",
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: primaryColor),
               ),
@@ -220,7 +220,7 @@ class _RegisterPagesState extends State<RegisterPages> {
               const Divider(),
               const SizedBox(height: 10),
               
-              const Text(
+              Text(
                 "Akun Login",
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: primaryColor),
               ),
@@ -287,8 +287,8 @@ class _RegisterPagesState extends State<RegisterPages> {
               // Button Aksi untuk register
               ElevatedButton.icon(
                 onPressed: _registerAct,
-                icon: const Icon(Icons.app_registration),
-                label: const Text(
+                icon: Icon(Icons.app_registration),
+                label: Text(
                   "DAFTAR SEKARANG",
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),

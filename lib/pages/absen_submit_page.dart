@@ -35,8 +35,8 @@ class _AbsenSubmitPageState extends State<AbsenSubmitPage> {
   bool isSubmitting = false;
 
   // Warna konsisten
-  const Color primaryColor = Color(0xFF003366); 
-  const Color accentColor = Color(0xFFF7931E);
+  final Color primaryColor = Color(0xFF003366); 
+  final Color accentColor = Color(0xFFF7931E);
 
   @override
   void initState() {
@@ -200,7 +200,7 @@ class _AbsenSubmitPageState extends State<AbsenSubmitPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("Kamera:", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text("Kamera:", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
 
             Container(
@@ -223,14 +223,14 @@ class _AbsenSubmitPageState extends State<AbsenSubmitPage> {
                   padding: const EdgeInsets.symmetric(vertical: 10),
                 ),
                 onPressed: isCameraReady ? _capturePhoto : null,
-                icon: const Icon(Icons.camera_alt),
-                label: const Text("Capture Foto", style: TextStyle(fontWeight: FontWeight.bold)),
+                icon: Icon(Icons.camera_alt),
+                label: Text("Capture Foto", style: TextStyle(fontWeight: FontWeight.bold)),
               ),
             ),
 
             if (imageBytes != null) ...[
               const SizedBox(height: 20),
-              const Text("Hasil Foto:", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text("Hasil Foto:", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Center(
                 child: ClipRRect(
@@ -241,7 +241,7 @@ class _AbsenSubmitPageState extends State<AbsenSubmitPage> {
             ],
 
             const Divider(height: 32),
-            const Text("Status Lokasi:", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            Text("Status Lokasi:", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             
             Container(
@@ -261,15 +261,15 @@ class _AbsenSubmitPageState extends State<AbsenSubmitPage> {
                     position == null
                         ? "Lokasi belum diambil"
                         : "Lat: ${position!.latitude.toStringAsFixed(6)}, Lng: ${position!.longitude.toStringAsFixed(6)}",
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       onPressed: _getLocation,
-                      icon: const Icon(Icons.my_location),
-                      label: const Text("Ambil Lokasi"),
+                      icon: Icon(Icons.my_location),
+                      label: Text("Ambil Lokasi"),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryColor,
                         foregroundColor: Colors.white,
@@ -292,8 +292,8 @@ class _AbsenSubmitPageState extends State<AbsenSubmitPage> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
                 child: isSubmitting
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text("SUBMIT ABSENSI", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                    ? CircularProgressIndicator(color: Colors.white)
+                    : Text("SUBMIT ABSENSI", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
               ),
             ),
           ],

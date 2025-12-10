@@ -29,8 +29,8 @@ class _DetailAbsensiPageState extends State<DetailAbsensiPage> {
   String? mapViewType;
 
   // Warna konsisten
-  const Color primaryColor = Color(0xFF003366); 
-  const Color accentColor = Color(0xFFF7931E);
+  final Color primaryColor = Color(0xFF003366); 
+  final Color accentColor = Color(0xFFF7931E);
 
   @override
   void initState() {
@@ -101,7 +101,7 @@ class _DetailAbsensiPageState extends State<DetailAbsensiPage> {
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -119,7 +119,7 @@ class _DetailAbsensiPageState extends State<DetailAbsensiPage> {
         // App Bar menggunakan tema global (primaryColor/Navy)
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: primaryColor))
+          ? Center(child: CircularProgressIndicator(color: primaryColor))
           : data == null
               ? const Center(
                   child: Padding(
@@ -157,7 +157,7 @@ class _DetailAbsensiPageState extends State<DetailAbsensiPage> {
                               return Container(
                                 height: 240,
                                 color: Colors.grey.shade200,
-                                child: const Center(
+                                child: Center(
                                   child: CircularProgressIndicator(color: primaryColor),
                                 ),
                               );
@@ -166,7 +166,7 @@ class _DetailAbsensiPageState extends State<DetailAbsensiPage> {
                               return Container(
                                 height: 240,
                                 color: Colors.grey.shade300,
-                                child: const Center(
+                                child: Center(
                                   child: Icon(Icons.broken_image, size: 50, color: Colors.grey),
                                 ),
                               );

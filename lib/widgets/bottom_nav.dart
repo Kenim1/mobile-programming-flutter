@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../pages/profile_pages.dart';
 import '../pages/dashboard_pages.dart';
-// Asumsikan Anda punya halaman lain
+// Jika Anda punya halaman lain, import di sini:
 // import '../pages/search_pages.dart'; 
 // import '../pages/favorite_pages.dart';
 
@@ -13,18 +13,18 @@ class MainWrapper extends StatefulWidget {
 }
 
 class _MainWrapperState extends State<MainWrapper> {
-  // Warna konsisten
-  const Color primaryColor = Color(0xFF003366); // Navy Blue
-  const Color accentColor = Color(0xFFF7931E);  // Orange
+  // Variabel warna di dalam State harus 'final'
+  final Color primaryColor = const Color(0xFF003366); // Navy Blue
+  final Color accentColor = const Color(0xFFF7931E);  // Orange
 
   int _currentIndex = 0;
 
-  // DAFTAR HALAMAN (Hanya ganti di sini jika ada penambahan/pengurangan tab)
-  final List<Widget> _pages = [
-    const DashboardPages(),
-    const Center(child: Text("Halaman Pencarian (Coming Soon)")), // Ganti dengan SearchPage()
-    const Center(child: Text("Halaman Favorit (Coming Soon)")), // Ganti dengan FavoritePage()
-    const ProfilePages(),
+  // DAFTAR HALAMAN
+  final List<Widget> _pages = const [
+    DashboardPages(),
+    Center(child: Text("Halaman Pencarian (Coming Soon)")), 
+    Center(child: Text("Halaman Favorit (Coming Soon)")), 
+    ProfilePages(),
   ];
 
   void _onItemTapped(int index) {
@@ -36,7 +36,7 @@ class _MainWrapperState extends State<MainWrapper> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Body menampung semua halaman tanpa me-render ulang (IndexedStack)
+      // Body menampung semua halaman
       body: IndexedStack(
         index: _currentIndex,
         children: _pages,
@@ -46,6 +46,7 @@ class _MainWrapperState extends State<MainWrapper> {
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           boxShadow: [
+            // Hapus 'const' karena menggunakan primaryColor (final)
             BoxShadow(
               color: primaryColor.withOpacity(0.1),
               spreadRadius: 1,
@@ -53,20 +54,23 @@ class _MainWrapperState extends State<MainWrapper> {
             ),
           ],
         ),
+        // Hapus 'const'
         child: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
           
           // Warna dan Tema Bottom Nav Bar
           backgroundColor: primaryColor,
-          selectedItemColor: accentColor, // Warna aktif: Orange
-          unselectedItemColor: Colors.white70, // Warna non-aktif: Putih pudar
+          selectedItemColor: accentColor, 
+          unselectedItemColor: Colors.white70, 
+          // Hapus 'const' pada TextStyle yang menggunakan variabel warna
           selectedLabelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: accentColor),
-          unselectedLabelStyle: const TextStyle(fontSize: 10, color: Colors.white70),
+          unselectedLabelStyle: const TextStyle(fontSize: 10, color: Colors.white70), // Boleh const
           
           currentIndex: _currentIndex,
-          onTap: _onItemTapped, // Menggunakan fungsi setState sederhana
+          onTap: _onItemTapped, 
 
-          items: [
+          // items boleh 'const'
+          items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.dashboard, size: 24),
               label: "Dashboard",

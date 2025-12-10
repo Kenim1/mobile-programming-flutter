@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
+// import '../widgets/bottom_nav.dart'; // Import ini dihapus karena redundan/tidak dipakai di sini
 import '../api/api_service.dart';
-import '../widgets/bottom_nav.dart';
 import './detail_berita_pages.dart';
 import './matakuliah_page.dart';
 import './profile_pages.dart';
@@ -20,10 +20,10 @@ class _DashboardPagesState extends State<DashboardPages> {
   List<dynamic> beritaAkademik = [];
   
   // Warna konsisten
-  const Color primaryColor = Color(0xFF003366); 
-  const Color accentColor = Color(0xFFF7931E);
+  final Color primaryColor = const Color(0xFF003366); 
+  final Color accentColor = const Color(0xFFF7931E);
 
-  final List<Map<String, dynamic>> menuItems = [
+  final List<Map<String, dynamic>> menuItems = const [
     {"icon": Icons.school, "label": "KRS"},
     {"icon": Icons.grade, "label": "KHS"},
     {"icon": Icons.calendar_month, "label": "Matakuliah"},
@@ -118,7 +118,7 @@ class _DashboardPagesState extends State<DashboardPages> {
         centerTitle: true,
       ),
       body: user == null
-          ? const Center(child: CircularProgressIndicator(color: primaryColor))
+          ? Center(child: CircularProgressIndicator(color: primaryColor))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(16), 
               child: Column(
@@ -146,7 +146,7 @@ class _DashboardPagesState extends State<DashboardPages> {
                               ? NetworkImage(user!["foto"])
                               : null,
                           child: !hasFoto
-                              ? const Icon(Icons.person_rounded, color: primaryColor, size: 40)
+                              ? Icon(Icons.person_rounded, color: primaryColor, size: 40)
                               : null,
                         ),
                         const SizedBox(width: 15),
@@ -197,7 +197,7 @@ class _DashboardPagesState extends State<DashboardPages> {
                     children: menuItems
                         .map(
                           (item) => GestureDetector(
-                            onTap: () => _onMenuTap(item["label"]),
+                            onTap: () => _onMenuTap(item["label"] as String),
                             child: Column(
                               children: [
                                 Container(
@@ -208,16 +208,16 @@ class _DashboardPagesState extends State<DashboardPages> {
                                     border: Border.all(color: primaryColor.withOpacity(0.3), width: 1),
                                   ),
                                   child: Icon(
-                                    item["icon"],
+                                    item["icon"] as IconData,
                                     color: primaryColor, 
                                     size: 30,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
                                 Text(
-                                  item["label"],
+                                  item["label"] as String,
                                   textAlign: TextAlign.center,
-                                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: primaryColor),
+                                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: primaryColor),
                                 ),
                               ],
                             ),
@@ -251,7 +251,7 @@ class _DashboardPagesState extends State<DashboardPages> {
                           itemBuilder: (context, index) {
                             final berita = beritaAkademik[index];
                             final judul = berita["judul"] ?? "Tanpa Judul";
-                            final slug = berita["slug"] ?? "";
+                            // final slug = berita["slug"] ?? ""; // Tidak dipakai
                             final tanggal = berita["createdAt"] ?? "";
 
                             return Card(
@@ -302,7 +302,7 @@ class _DashboardPagesState extends State<DashboardPages> {
                 ],
               ),
             ),
-      bottomNavigationBar: const BottomNav(),
+      // BARIS INI (bottomNavigationBar) SUDAH DIHAPUS
     );
   }
 }

@@ -19,8 +19,8 @@ class _ProfilePagesState extends State<ProfilePages> {
   final formKey = GlobalKey<FormState>();
 
   // Warna konsisten
-  const Color primaryColor = Color(0xFF003366);
-  const Color accentColor = Color(0xFFF7931E);
+  final Color primaryColor = Color(0xFF003366);
+  final Color accentColor = Color(0xFFF7931E);
 
   // Controller biodata
   final namaC = TextEditingController();
@@ -49,7 +49,7 @@ class _ProfilePagesState extends State<ProfilePages> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(10),
-        borderSide: const BorderSide(color: primaryColor, width: 2),
+        borderSide: BorderSide(color: primaryColor, width: 2),
       ),
       contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 10),
     );
@@ -223,11 +223,11 @@ class _ProfilePagesState extends State<ProfilePages> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Profil Mahasiswa"),
+        title: Text("Profil Mahasiswa"),
         // App Bar menggunakan tema global (primaryColor/Navy) dari main.dart
       ),
       body: user == null
-          ? const Center(child: CircularProgressIndicator(color: primaryColor))
+          ? Center(child: CircularProgressIndicator(color: primaryColor))
           : SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Form(
@@ -312,10 +312,10 @@ class _ProfilePagesState extends State<ProfilePages> {
                     // --- TOMBOL SIMPAN ---
                     ElevatedButton.icon(
                       onPressed: isLoading ? null : _updateBiodata,
-                      icon: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Icon(Icons.save),
+                      icon: isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : Icon(Icons.save),
                       label: Text(
                         isLoading ? "Menyimpan Data..." : "SIMPAN PERUBAHAN",
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: primaryColor,

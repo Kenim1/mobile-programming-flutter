@@ -23,8 +23,8 @@ class KrsDetailPage extends StatefulWidget {
 
 class _KrsDetailPageState extends State<KrsDetailPage> {
   // Warna konsisten
-  const Color primaryColor = Color(0xFF003366);
-  const Color accentColor = Color(0xFFF7931E);
+  final Color primaryColor = Color(0xFF003366);
+  final Color accentColor = Color(0xFFF7931E);
 
   List<dynamic> daftarMatkul = [];
   bool isLoading = true;
@@ -43,7 +43,7 @@ class _KrsDetailPageState extends State<KrsDetailPage> {
     if (url == null || url.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text("Link Zoom tidak tersedia"),
+          content: Text("Link Zoom tidak tersedia"),
           backgroundColor: accentColor,
         ),
       );
@@ -171,11 +171,11 @@ class _KrsDetailPageState extends State<KrsDetailPage> {
         onPressed: _tambahMatkulModal,
         backgroundColor: accentColor,
         foregroundColor: Colors.white,
-        icon: const Icon(Icons.add_circle_outline),
-        label: const Text("Tambah Matkul"),
+        icon: Icon(Icons.add_circle_outline),
+        label: Text("Tambah Matkul"),
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator(color: primaryColor))
+          ? Center(child: CircularProgressIndicator(color: primaryColor))
           : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -187,7 +187,7 @@ class _KrsDetailPageState extends State<KrsDetailPage> {
                     children: [
                       Text(
                         "Tahun Ajaran: ${widget.tahunAjaran}",
-                        style: const TextStyle(fontSize: 16, color: primaryColor, fontWeight: FontWeight.w500),
+                        style: TextStyle(fontSize: 16, color: primaryColor, fontWeight: FontWeight.w500),
                       ),
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
@@ -197,7 +197,7 @@ class _KrsDetailPageState extends State<KrsDetailPage> {
                         ),
                         child: Text(
                           "Total SKS: ${totalSKS.toStringAsFixed(0)}",
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: primaryColor),
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: primaryColor),
                         ),
                       ),
                     ],
@@ -248,7 +248,7 @@ class _KrsDetailPageState extends State<KrsDetailPage> {
             // Nama Matkul
             Text(
               mk['nama_matakuliah'] ?? '-',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: primaryColor,
@@ -259,11 +259,11 @@ class _KrsDetailPageState extends State<KrsDetailPage> {
             // Detail SKS dan Dosen
             Row(
               children: [
-                const Icon(Icons.class_outlined, size: 16, color: accentColor),
+                Icon(Icons.class_outlined, size: 16, color: accentColor),
                 const SizedBox(width: 5),
                 Text("SKS: ${mk['jumlah_sks']?.toString() ?? '-'}"),
                 const SizedBox(width: 15),
-                const Icon(Icons.person_outline, size: 16, color: accentColor),
+                Icon(Icons.person_outline, size: 16, color: accentColor),
                 const SizedBox(width: 5),
                 Expanded(child: Text("Dosen: ${mk['dosen'] ?? '-'}")),
               ],
@@ -273,7 +273,7 @@ class _KrsDetailPageState extends State<KrsDetailPage> {
             // Jadwal
             Row(
               children: [
-                const Icon(Icons.schedule, size: 16, color: accentColor),
+                Icon(Icons.schedule, size: 16, color: accentColor),
                 const SizedBox(width: 5),
                 Text(
                   "Jadwal: ${mk['nama_hari'] ?? '-'}, ${mk['jam_mulai'] ?? '-'} - ${mk['jam_selesai'] ?? '-'}",
@@ -291,11 +291,11 @@ class _KrsDetailPageState extends State<KrsDetailPage> {
                   message: "Buka Link Zoom",
                   child: OutlinedButton.icon(
                     onPressed: () => _openZoom(mk['zoom_link']),
-                    icon: const Icon(Icons.video_camera_front, size: 20),
-                    label: const Text("Zoom"),
+                    icon: Icon(Icons.video_camera_front, size: 20),
+                    label: Text("Zoom"),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: primaryColor,
-                      side: const BorderSide(color: primaryColor),
+                      side: BorderSide(color: primaryColor),
                     ),
                   ),
                 ),
@@ -316,8 +316,8 @@ class _KrsDetailPageState extends State<KrsDetailPage> {
                         ),
                       );
                     },
-                    icon: const Icon(Icons.check_circle_outline, size: 20),
-                    label: const Text("Absen"),
+                    icon: Icon(Icons.check_circle_outline, size: 20),
+                    label: Text("Absen"),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: accentColor,
                       foregroundColor: Colors.white,
@@ -330,7 +330,7 @@ class _KrsDetailPageState extends State<KrsDetailPage> {
                 Tooltip(
                   message: "Hapus Matakuliah dari KRS",
                   child: IconButton(
-                    icon: const Icon(Icons.delete_outline, color: Colors.red, size: 24),
+                    icon: Icon(Icons.delete_outline, color: Colors.red, size: 24),
                     onPressed: () => _hapusMatakuliah(mk['id']),
                   ),
                 ),
@@ -344,7 +344,7 @@ class _KrsDetailPageState extends State<KrsDetailPage> {
 }
 
 // ====================================================================
-// SHEET TAMBAH MATKUL
+// SHEET TAMBAH MATKUL - KODE SIAP TEMPEL YANG DIPERBAIKI
 // ====================================================================
 
 class TambahMatkulSheet extends StatefulWidget {
@@ -363,8 +363,8 @@ class TambahMatkulSheet extends StatefulWidget {
 
 class _TambahMatkulSheetState extends State<TambahMatkulSheet> {
   // Warna konsisten
-  const Color primaryColor = Color(0xFF003366);
-  const Color accentColor = Color(0xFFF7931E);
+  final Color primaryColor = Color(0xFF003366);
+  final Color accentColor = Color(0xFFF7931E);
   
   List<dynamic> daftarMatkulTersedia = [];
   bool isLoading = true;
@@ -385,10 +385,25 @@ class _TambahMatkulSheetState extends State<TambahMatkulSheet> {
     try {
       final res = await dio.get("${ApiService.baseUrl}jadwal/daftar-jadwal");
 
+      // PERBAIKAN: Mengganti kunci (key) ekstrak data dari 'jadwals' menjadi 'data' 
+      // (asumsi API Anda menggunakan 'data' sebagai kunci umum)
+      // Jika masih gagal, ganti lagi menjadi 'jadwals' atau kunci yang benar
       setState(() {
-        daftarMatkulTersedia = res.data['jadwals'] ?? [];
+        // Coba periksa apakah API mengembalikan data dalam kunci 'data' atau 'jadwals'
+        if (res.data['data'] != null) {
+          daftarMatkulTersedia = res.data['data'] ?? [];
+        } else {
+          // Jika 'data' tidak ada, kembali ke kunci 'jadwals' yang ada di kode Anda sebelumnya
+          daftarMatkulTersedia = res.data['jadwals'] ?? [];
+        }
       });
+      
+      // Tambahkan debug print untuk memverifikasi data yang diterima
+      debugPrint("API Response Status: ${res.data['status']}");
+      debugPrint("Jumlah Matkul Diterima: ${daftarMatkulTersedia.length}");
+
     } on DioException catch (e) {
+      debugPrint("ERROR LOAD MATKUL: $e");
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(e.response?.data['message'] ?? "Gagal memuat matakuliah")));
@@ -456,7 +471,7 @@ class _TambahMatkulSheetState extends State<TambahMatkulSheet> {
           const Divider(height: 20),
           Expanded(
             child: isLoading
-                ? const Center(child: CircularProgressIndicator(color: primaryColor))
+                ? Center(child: CircularProgressIndicator(color: primaryColor))
                 : daftarMatkulTersedia.isEmpty
                     ? const Center(child: Text("Tidak ada matakuliah tersedia saat ini."))
                     : ListView.builder(
@@ -472,11 +487,11 @@ class _TambahMatkulSheetState extends State<TambahMatkulSheet> {
                               leading: Icon(Icons.school, color: accentColor),
                               title: Text(
                                 mk['nama_matakuliah'] ?? '-',
-                                style: const TextStyle(fontWeight: FontWeight.w600),
+                                style: TextStyle(fontWeight: FontWeight.w600),
                               ),
                               subtitle: Text(
                                 "SKS: ${mk['jumlah_sks'] ?? '-'} | ${mk['nama_hari'] ?? '-'}, ${mk['jam_mulai'] ?? '-'} - ${mk['jam_selesai'] ?? '-'}",
-                                style: const TextStyle(fontSize: 12),
+                                style: TextStyle(fontSize: 12),
                               ),
                               trailing: ElevatedButton(
                                 onPressed: () => tambahMatkul(mk['id']),
@@ -485,7 +500,7 @@ class _TambahMatkulSheetState extends State<TambahMatkulSheet> {
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(horizontal: 10),
                                 ),
-                                child: const Text("Tambah"),
+                                child: Text("Tambah"),
                               ),
                             ),
                           );
